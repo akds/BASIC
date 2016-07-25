@@ -125,7 +125,6 @@ def extend_rc_left(s, d, verb, rl):
     return s
 
 
-
 def heavy(hc_end, hc_start, c_hc, v_hc, verb, read_length, cellid, output_location):
     if verb: print("Stitching heavy chain sequence (5' <--- 3') ...")
     tmp = revcom(extend_rc_left(hc_end, c_hc, verb, read_length))
