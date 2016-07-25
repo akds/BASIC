@@ -40,7 +40,7 @@ def revcom(s):
 def splitread(s, rl):
     table = []
     rl = min(rl,len(s))
-    for x in xrange(rl - 1, 14, -1):
+    for x in range(rl - 1, 14, -1):
     	table.append(s[-x:])
     return table
 
@@ -48,12 +48,20 @@ def splitread(s, rl):
 def extend_right(s, d, verb, rl):
     while 1:
         table = splitread(s, rl)
-        edges = [sys.maxint]
+        edges = [sys.maxsize]
         best_c = 0
         best_k = ''
-        cache_dict = {k: v for (k, v) in d.iteritems() if table[-1] in k}
+        try:
+        	cache_dict = {k: v for (k, v) in d.iteritems() if table[-1] in k}
+        except AttributeError:
+        	cache_dict = {k: v for (k, v) in d.items() if table[-1] in k}
+        
         for hc_start_block in table:
-            match_dict = {k: v for (k, v) in cache_dict.iteritems() if re.match(hc_start_block, k)}
+            try:
+            	match_dict = {k: v for (k, v) in cache_dict.iteritems() if re.match(hc_start_block, k)}
+            except AttributeError:
+            	match_dict = {k: v for (k, v) in cache_dict.items() if re.match(hc_start_block, k)}
+
             if len(match_dict) == 0:
                 continue
             n = float(sum(match_dict.values()) + .5)
@@ -80,12 +88,20 @@ def extend_right(s, d, verb, rl):
 def extend_rc_left(s, d, verb, rl):
     while 1:
         table = splitread(s, rl)
-        edges = [sys.maxint]
+        edges = [sys.maxsize]
         best_c = 0
         best_k = ''
-        cache_dict = {k: v for (k, v) in d.iteritems() if table[-1] in k}
+        try:
+        	cache_dict = {k: v for (k, v) in d.iteritems() if table[-1] in k}
+        except AttributeError:
+        	cache_dict = {k: v for (k, v) in d.items() if table[-1] in k}
+        
         for hc_start_block in table:
-            match_dict = {k: v for (k, v) in cache_dict.iteritems() if re.match(hc_start_block, k)}
+            try:
+            	match_dict = {k: v for (k, v) in cache_dict.iteritems() if re.match(hc_start_block, k)}
+            except AttributeError:
+            	match_dict = {k: v for (k, v) in cache_dict.items() if re.match(hc_start_block, k)}
+            
             if len(match_dict) == 0:
                 continue
             n = float(sum(match_dict.values()) + .5)
@@ -105,7 +121,7 @@ def extend_rc_left(s, d, verb, rl):
             return s
         s += best_k[best_c:]
         s = s.strip('N')
-        if verb: print(revcom(s))
+        if verb: print((revcom(s)))
     return s
 
 
@@ -215,7 +231,7 @@ output_file = str(re.sub(r'\W+', '', results.name))
 tmp_name = results.name
 database = os.path.dirname(os.path.realpath(sys.argv[0])) + "/db/"
 
-if results.VERBOSE: print('Run ID:', tmp_name, '...')
+if results.VERBOSE: print(('Run ID: ' + tmp_name ))
 
 if (len(results.LEFT) == 0) | (len(results.RIGHT) == 0):
     if len(results.FASTQ) == 0:
@@ -223,11 +239,11 @@ if (len(results.LEFT) == 0) | (len(results.RIGHT) == 0):
         print('Program terminated.')
         exit(0)
     else:
-        if results.VERBOSE: print('List of single end (SE) sequencing inputs:', results.FASTQ, '...')
+        if results.VERBOSE: print(('List of single end (SE) sequencing inputs: ' + results.FASTQ + ' ...'))
         single = 1
 elif (len(results.LEFT) != 0) & (len(results.RIGHT) != 0):
-    if results.VERBOSE: print('List of paired end (PE_1) sequencing inputs (left):', results.LEFT, '...')
-    if results.VERBOSE: print('List of paired end (PE_2) sequencing inputs (right):', results.RIGHT, '...')
+    if results.VERBOSE: print(('List of paired end (PE_1) sequencing inputs (left): ' + results.LEFT + ' ...'))
+    if results.VERBOSE: print(('List of paired end (PE_2) sequencing inputs (right): ' + results.RIGHT + ' ...'))
     paired = 1
 else:
     print('Both data left and right paired end sequencing must be included')
@@ -239,7 +255,7 @@ if single == 1:
     for s in f_list:
         v = os.path.isfile(s)
         if v == False:
-            print(s, 'not found')
+            print((s + ' not found'))
             print('Program terminated.')
             exit(0)
 elif paired == 1:
@@ -247,7 +263,7 @@ elif paired == 1:
     for s in f_list:
         v = os.path.isfile(s)
         if v == False:
-            print(s, 'not found')
+            print((s + ' not found'))
             print('Program terminated.')
             exit(0)
 
@@ -255,7 +271,7 @@ elif paired == 1:
     for s in f_list:
         v = os.path.isfile(s)
         if v == False:
-            print(s, 'not found')
+            print((s + ' not found'))
             print('Program terminated.')
             exit(0)
 else:
@@ -263,11 +279,12 @@ else:
     print('Program terminated.')
     exit(0)
 
+	
 try:
     os.makedirs(output_location)
 except OSError:
     if not os.path.isdir(output_location):
-        print('Output directory:', output_location, 'is not writeable -- check permissions or try different directory')
+        print(('Output directory: ' + output_location + ' is not writeable -- check permissions or try different directory'))
         print('Program terminated.')
         exit(0)
 
@@ -281,10 +298,10 @@ else:
     check_read = os.access(db_path, os.R_OK)
     if check_read:
         db_path = database + results.genome + '_*'
-        if results.VERBOSE: print('Using', db_path, 'genome files...')
+        if results.VERBOSE: print(('Using ' +  db_path + ' genome files ...'))
     else:
         db_path = database + results.genome + '_*'
-        print('Genome index files not found:', db_path)
+        print(('Genome index files not found: ' + db_path))
         print('Check database path (-d) and that index files are readable')
         print('Program terminated.')
         exit(0)
@@ -294,16 +311,16 @@ if results.type != 'BCR':
     print('Program terminated.')
     exit(0)
 else:
-    if results.VERBOSE: print('Assembling', results.type, 'sequences ...')
+    if results.VERBOSE: print(('Assembling ' + results.type + ' sequences ...'))
 
-if results.VERBOSE: print('Using', results.constant_value, 'threads ...')
+if results.VERBOSE: print(('Using ' + results.constant_value + ' threads ...'))
 
 if single == 1:
     if results.VERBOSE == True: print('Using Bowtie2 to find initial seeds:')
     try:
         cmd = results.bowtie + "/bowtie2 --very-sensitive  --quiet --norc --no-hd -x " + database + results.genome + "_ighv " + \
               "--threads " + results.constant_value + " -U " + results.FASTQ + " | awk -F'\t'  '{print $10\"\t\"$3\"\t\"$6\"\t\"$4}'  >" + output_location + "/" + tmp_name + ".ighv"
-        if results.VERBOSE == True: print("Mapping reads to heavy chain variable region...")
+        if results.VERBOSE == True: print("Mapping reads to heavy chain variable region ...")
         proc = subprocess.check_call(cmd, shell=True)
     except:
         print('Error Bowtie2 not installed or not found in path')
@@ -313,7 +330,7 @@ if single == 1:
     try:
         cmd = results.bowtie + "/bowtie2 --very-sensitive --quiet --nofw --no-hd -x " + database + results.genome + "_ighc " + \
               "--threads " + results.constant_value + " -U " + results.FASTQ + " | awk -F'\t'  '{print $10\"\t\"$3\"\t\"$6\"\t\"$4}'  >" + output_location + "/" + tmp_name + ".ighc"
-        if results.VERBOSE == True: print("Mapping reads to heavy chain constant region...")
+        if results.VERBOSE == True: print("Mapping reads to heavy chain constant region ...")
         proc = subprocess.check_call(cmd, shell=True)
     except:
         print('Error Bowtie2 not installed or not found in path')
@@ -323,7 +340,7 @@ if single == 1:
     try:
         cmd = results.bowtie + "/bowtie2 --very-sensitive  --quiet --norc  --no-hd -x " + database + results.genome + "_iglv " + \
               "--threads " + results.constant_value + " -U " + results.FASTQ + " | awk -F'\t'  '{print $10\"\t\"$3\"\t\"$6\"\t\"$4}' >" + output_location + "/" + tmp_name + ".iglv"
-        if results.VERBOSE == True: print("Mapping reads to light chain variable region...")
+        if results.VERBOSE == True: print("Mapping reads to light chain variable region ...")
         proc = subprocess.check_call(cmd, shell=True)
     except:
         print('Error Bowtie2 not installed or not found in path')
@@ -333,7 +350,7 @@ if single == 1:
     try:
         cmd = results.bowtie + "/bowtie2 --very-sensitive  --quiet --nofw  --no-hd -x " + database + results.genome + "_iglc " + \
               "--threads " + results.constant_value + " -U " + results.FASTQ + " | awk -F'\t'  '{print $10\"\t\"$3\"\t\"$6\"\t\"$4}'  >" + output_location + "/" + tmp_name + ".iglc"
-        if results.VERBOSE == True: print("Mapping reads to light chain constant region...")
+        if results.VERBOSE == True: print("Mapping reads to light chain constant region ...")
         proc = subprocess.check_call(cmd, shell=True)
     except:
         print('Error Bowtie2 not installed or not found in path')
@@ -345,7 +362,7 @@ elif paired == 1:
     try:
         cmd = results.bowtie + "/bowtie2 --very-sensitive  --quiet --norc --no-hd -x " + database + results.genome + "_ighv " + \
               "--threads " + results.constant_value + " -U " + results.LEFT + "," + results.RIGHT + " | awk -F'\t'  '{print $10\"\t\"$3\"\t\"$6\"\t\"$4}'  >" + output_location + "/" + tmp_name + ".ighv"
-        if results.VERBOSE == True: print("Mapping reads to heavy chain variable region...")
+        if results.VERBOSE == True: print("Mapping reads to heavy chain variable region ...")
         proc = subprocess.check_call(cmd, shell=True)
     except:
         print('Error Bowtie2 not installed or not found in path')
@@ -355,7 +372,7 @@ elif paired == 1:
     try:
         cmd = results.bowtie + "/bowtie2 --very-sensitive --quiet --nofw --no-hd -x " + database + results.genome + "_ighc " + \
               "--threads " + results.constant_value + " -U " + results.LEFT + "," + results.RIGHT + " | awk -F'\t'  '{print $10\"\t\"$3\"\t\"$6\"\t\"$4}'  >" + output_location + "/" + tmp_name + ".ighc"
-        if results.VERBOSE == True: print("Mapping reads to heavy chain constant region...")
+        if results.VERBOSE == True: print("Mapping reads to heavy chain constant region ...")
         proc = subprocess.check_call(cmd, shell=True)
     except:
         print('Error Bowtie2 not installed or not found in path')
@@ -365,7 +382,7 @@ elif paired == 1:
     try:
         cmd = results.bowtie + "/bowtie2 --very-sensitive  --quiet --norc  --no-hd -x " + database + results.genome + "_iglv " + \
               "--threads " + results.constant_value + " -U " + results.LEFT + "," + results.RIGHT + " | awk -F'\t'  '{print $10\"\t\"$3\"\t\"$6\"\t\"$4}'  >" + output_location + "/" + tmp_name + ".iglv"
-        if results.VERBOSE == True: print("Mapping reads to light chain variable region...")
+        if results.VERBOSE == True: print("Mapping reads to light chain variable region ...")
         proc = subprocess.check_call(cmd, shell=True)
     except:
         print('Error Bowtie2 not installed or not found in path')
@@ -375,7 +392,7 @@ elif paired == 1:
     try:
         cmd = results.bowtie + "/bowtie2 --very-sensitive  --quiet --nofw  --no-hd -x " + database + results.genome + "_iglc " + \
               "--threads " + results.constant_value + " -U " + results.LEFT + "," + results.RIGHT + " | awk -F'\t'  '{print $10\"\t\"$3\"\t\"$6\"\t\"$4}' >" + output_location + "/" + tmp_name + ".iglc"
-        if results.VERBOSE == True: print("Mapping reads to light chain constant region...")
+        if results.VERBOSE == True: print("Mapping reads to light chain constant region ...")
         proc = subprocess.check_call(cmd, shell=True)
     except:
         print('Error Bowtie2 not installed or not found in path')
@@ -392,7 +409,7 @@ d = defaultdict(int)
 
 # anchor start of heavy chain
 hv = defaultdict(int)
-if results.VERBOSE: print("Searching for an anchor in variable region (HC) ...")
+if results.VERBOSE: print("Searching for an anchor in heavy chain variable region ...")
 cmd = output_location + "/" + tmp_name + ".ighv"
 with open(cmd) as f:
     for line in f:
@@ -407,15 +424,15 @@ try:
     hc_start = max(d, key=d.get)
     hc_start = hc_start.strip('N')
 except (ValueError, TypeError):
-    print('Error: ', tmp_name, ' did not map to ighv.')
+    print(('Error: ' + tmp_name + ' did not map to heavy chain variable region.'))
     print('Program terminated.')
     exit(0)
-if results.VERBOSE: print("seed: " + hc_start)
+if results.VERBOSE: print(("anchor: " + hc_start))
 d.clear()
 
 # anchor end of heavy chain
 hc = defaultdict(int)
-if results.VERBOSE: print("Searching for an anchor in constant region (HC) ...")
+if results.VERBOSE: print("Searching for an anchor in heavy chain constant region ...")
 cmd = output_location + "/" + tmp_name + ".ighc"
 with open(cmd) as f:
     for line in f:
@@ -430,15 +447,15 @@ try:
     hc_end = max(d, key=d.get)
     hc_end = hc_end.strip('N')
 except (ValueError, TypeError):
-    print('Error: ', tmp_name, ' did not map to ighc.')
+    print(('Error: ' + tmp_name + ' did not map to heavy chain constant region.'))
     print('Program terminated.')
     exit(0)
-if results.VERBOSE: print("seed: " + revcom(hc_end))
+if results.VERBOSE: print(("anchor: " + revcom(hc_end)))
 d.clear()
 
 # anchor start of light chain
 lv = defaultdict(int)
-if results.VERBOSE: print("Searching for an anchor in variable region (LC) ...")
+if results.VERBOSE: print("Searching for an anchor in light chain variable region ...")
 cmd = output_location + "/" + tmp_name + ".iglv"
 with open(cmd) as f:
     for line in f:
@@ -453,15 +470,15 @@ try:
     lc_start = max(d, key=d.get)
     lc_start = lc_start.strip('N')
 except (ValueError, TypeError):
-    print('Error: ', tmp_name, ' did not map to iglv.')
+    print(('Error: ' + tmp_name + ' did not map to light chain variable region.'))
     print('Program terminated.')
     exit(0)
-if results.VERBOSE: print("seed: " + lc_start)
+if results.VERBOSE: print(("anchor: " + lc_start))
 d.clear()
 
 # anchor end of light chain
 lc = defaultdict(int)
-if results.VERBOSE: print("Searching for an anchor in constant region (LC) ...")
+if results.VERBOSE: print("Searching for an anchor in light chain constant region ...")
 cmd = output_location + "/" + tmp_name + ".iglc"
 with open(cmd) as f:
     for line in f:
@@ -476,10 +493,10 @@ try:
     lc_end = max(d, key=d.get)
     lc_end = lc_end.strip('N')
 except (ValueError, TypeError):
-    print('Error: ', tmp_name, ' did not map to ighc.')
+    print(('Error: ' + tmp_name + ' did not map to light chain constant region.'))
     print('Program terminated.')
     exit(0)
-if results.VERBOSE: print("seed: " + revcom(lc_end))
+if results.VERBOSE: print(("anchor: " + revcom(lc_end)))
 d.clear()
 ### End of single end sequencing processing
 
@@ -502,4 +519,4 @@ if __name__ == '__main__':
     ptrn = output_location + "/" + tmp_name + ".iglc"
     os.remove(ptrn)
 
-print("Done. Total run time: %s seconds" % (time.time() - start_time))
+print(("Done. Total run time: %s seconds" % (time.time() - start_time)))
