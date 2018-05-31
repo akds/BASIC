@@ -127,52 +127,28 @@ def extend_rc_left(s, d, verb, rl):
     return s
 
 
+def stitch(chain_end, chain_start, const, variable, verb, read_length, cellid, output_location, chain_name):
+    if verb: print("Stitching {} chain sequence (5' <--- 3') ...".format(chain_name))
+    tmp = revcom(extend_rc_left(chain_end, const, verb, read_length))
+    if verb: print("Stitching {} chain sequence (5' ---> 3') ...".format(chain_name))
+    const_token = extend_right(tmp, variable, verb, read_length)
 
-def heavy(hc_end, hc_start, c_hc, v_hc, verb, read_length, cellid, output_location):
-    if verb: print("Stitching heavy chain sequence (5' <--- 3') ...")
-    tmp = revcom(extend_rc_left(hc_end, c_hc, verb, read_length))
-    if verb: print("Stitching heavy chain sequence (5' ---> 3') ...")
-    const_token = extend_right(tmp, v_hc, verb, read_length)
-
-    if (hc_start in const_token) or (revcom(hc_start) in const_token):
+    if (chain_start in const_token) or (revcom(chain_start) in const_token):
         if verb: print("Path found!")
-        result = ">cell_id=" + cellid + ";heavy_chain;BASIC\n" + const_token + "\n"
+        result = ">cell_id={};{}_chain;BASIC\n{}\n".format(cellid, chain_name, const_token)
     else:
-        if verb: print("Re-stitching heavy chain sequence (5' ---> 3') ...")
-        tmp = extend_right(hc_start, v_hc, verb, read_length)
-        if verb: print("Re-stitching heavy chain sequence (5' <--- 3') ...")
-        var_token = revcom(extend_rc_left(revcom(tmp), c_hc, verb, read_length))
-        if (revcom(hc_end) in var_token) or (hc_end in var_token):
+        if verb: print("Re-stitching {} chain sequence (5' ---> 3') ...".format(chain_name))
+        tmp = extend_right(chain_start, variable, verb, read_length)
+        if verb: print("Re-stitching {} chain sequence (5' <--- 3') ...".format(chain_name))
+        var_token = revcom(extend_rc_left(revcom(tmp), const, verb, read_length))
+        if (revcom(chain_end) in var_token) or (chain_end in var_token):
             if verb: print("Path found!")
-            result = ">cell_id=" + cellid + ";heavy_chain;BASIC\n" + var_token + "\n"
+            result = ">cell_id={};{}_chain;BASIC\n{}\n".format(cellid, chain_name, var_token)
         else:
             if verb: print("Path not found!")
-            result = ">cell_id=" + cellid + ";heavy_chain[variable_region_contig];BASIC\n" + var_token + "\n" + ">cell_id=" + cellid + ";heavy_chain[constant_region_contig];BASIC\n" + const_token + "\n"
-    cmd = output_location + "/" + cellid + ".fasta"
-    with open(cmd, "a") as text_file:
-        text_file.write(result)
+            result = ">cell_id={};{}_chain[variable_region_contig];BASIC\n{}\n".format(cellid, chain_name, var_token)
+            result +=">cell_id={};{}_chain[constant_region_contig];BASIC\n{}\n".format(cellid, chain_name, const_token)
 
-
-def light(lc_end, lc_start, c_lc, v_lc, verb, read_length, cellid, output_location):
-    if verb: print("Stitching light chain sequence (5' <--- 3') ...")
-    tmp = revcom(extend_rc_left(lc_end, c_lc, verb, read_length))
-    if verb: print("Stitching light chain sequence (5' ---> 3') ...")
-    const_token = extend_right(tmp, v_lc, verb, read_length)
-
-    if (lc_start in const_token) or (revcom(lc_start) in const_token):
-        if verb: print("Path found!")
-        result = ">cell_id=" + cellid + ";light_chain;BASIC\n" + const_token + "\n"
-    else:
-        if verb: print("Re-stitching light chain sequence (5' ---> 3') ...")
-        tmp = extend_right(lc_start, v_lc, verb, read_length)
-        if verb: print("Re-stitching light chain sequence (5' <--- 3') ...")
-        var_token = revcom(extend_rc_left(revcom(tmp), c_lc, verb, read_length))
-        if (revcom(lc_end) in var_token) or (lc_end in var_token):
-            if verb: print("Path found!")
-            result = ">cell_id=" + cellid + ";light_chain;BASIC\n" + var_token + "\n"
-        else:
-            if verb: print("Path not found!")
-            result = ">cell_id=" + cellid + ";light_chain[variable_region_contig];BASIC\n" + var_token + "\n" + ">cell_id=" + cellid + ";light_chain[constant_region_contig];BASIC\n" + const_token + "\n"
     cmd = output_location + "/" + cellid + ".fasta"
     with open(cmd, "a") as text_file:
         text_file.write(result)
@@ -526,10 +502,10 @@ def main():
     d.clear()
     ### End of single end sequencing processing
 
-    p1 = Process(target=heavy,
-                 args=(hc_end, hc_start, hc, hv, results.VERBOSE, max_read_length, results.name, output_location))
-    p2 = Process(target=light,
-                 args=(lc_end, lc_start, lc, lv, results.VERBOSE, max_read_length, results.name, output_location))
+    p1 = Process(target=stitch,
+                 args=(hc_end, hc_start, hc, hv, results.VERBOSE, max_read_length, results.name, output_location, 'heavy'))
+    p2 = Process(target=stitch,
+                 args=(lc_end, lc_start, lc, lv, results.VERBOSE, max_read_length, results.name, output_location, 'light'))
     p1.start()
     p2.start()
     p1.join()
