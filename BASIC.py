@@ -41,7 +41,7 @@ def splitread(s, rl):
     table = []
     rl = min(rl,len(s))
     for x in range(rl - 1, 14, -1):
-    	table.append(s[-x:])
+        table.append(s[-x:])
     return table
 
 
@@ -52,15 +52,15 @@ def extend_right(s, d, verb, rl):
         best_c = 0
         best_k = ''
         try:
-        	cache_dict = {k: v for (k, v) in d.iteritems() if table[-1] in k}
+            cache_dict = {k: v for (k, v) in d.iteritems() if table[-1] in k}
         except AttributeError:
-        	cache_dict = {k: v for (k, v) in d.items() if table[-1] in k}
-        
+            cache_dict = {k: v for (k, v) in d.items() if table[-1] in k}
+
         for hc_start_block in table:
             try:
-            	match_dict = {k: v for (k, v) in cache_dict.iteritems() if re.match(hc_start_block, k)}
+                match_dict = {k: v for (k, v) in cache_dict.iteritems() if re.match(hc_start_block, k) is not None}
             except AttributeError:
-            	match_dict = {k: v for (k, v) in cache_dict.items() if re.match(hc_start_block, k)}
+                match_dict = {k: v for (k, v) in cache_dict.items() if re.match(hc_start_block, k) is not None}
 
             if len(match_dict) == 0:
                 continue
@@ -71,7 +71,8 @@ def extend_right(s, d, verb, rl):
             k = list(match_dict.keys())
             if (entropy <= min(edges)) and (max(v) > 1):
                 best_k = k[v.index(max(v))]
-                best_c = -(rl - len(hc_start_block))
+                best_rl = len(best_k)
+                best_c = -(best_rl - len(hc_start_block))
                 edges.append(entropy)
             else:
                 continue
@@ -92,16 +93,16 @@ def extend_rc_left(s, d, verb, rl):
         best_c = 0
         best_k = ''
         try:
-        	cache_dict = {k: v for (k, v) in d.iteritems() if table[-1] in k}
+            cache_dict = {k: v for (k, v) in d.iteritems() if table[-1] in k}
         except AttributeError:
-        	cache_dict = {k: v for (k, v) in d.items() if table[-1] in k}
-        
+            cache_dict = {k: v for (k, v) in d.items() if table[-1] in k}
+
         for hc_start_block in table:
             try:
-            	match_dict = {k: v for (k, v) in cache_dict.iteritems() if re.match(hc_start_block, k)}
+                match_dict = {k: v for (k, v) in cache_dict.iteritems() if re.match(hc_start_block, k) is not None}
             except AttributeError:
-            	match_dict = {k: v for (k, v) in cache_dict.items() if re.match(hc_start_block, k)}
-            
+                match_dict = {k: v for (k, v) in cache_dict.items() if re.match(hc_start_block, k) is not None}
+
             if len(match_dict) == 0:
                 continue
             n = float(sum(match_dict.values()) + .5)
@@ -111,7 +112,8 @@ def extend_rc_left(s, d, verb, rl):
             k = list(match_dict.keys())
             if (entropy <= min(edges)) and (max(v) > 1):
                 best_k = k[v.index(max(v))]
-                best_c = -(rl - len(hc_start_block))
+                best_rl = len(best_k)
+                best_c = -(best_rl - len(hc_start_block))
                 edges.append(entropy)
             else:
                 continue
@@ -123,6 +125,7 @@ def extend_rc_left(s, d, verb, rl):
         s = s.strip('N')
         if verb: print((revcom(s)))
     return s
+
 
 
 def heavy(hc_end, hc_start, c_hc, v_hc, verb, read_length, cellid, output_location):
@@ -217,10 +220,12 @@ parser.add_argument('-v', action='store_true', dest='VERBOSE',
                     default=False,
                     help='Turns on verbosity (more details)')
 
-parser.add_argument('--version', action='version', version='%(prog)s 1.0.1')
+parser.add_argument('--version', action='version', version='%(prog)s 1.2 (beta)')
 
 single = 0
 paired = 0
+
+max_read_length = 0;
 
 results = parser.parse_args()
 start_time = time.time()
@@ -278,7 +283,7 @@ else:
     print('Program terminated.')
     exit(0)
 
-	
+
 try:
     os.makedirs(output_location)
 except OSError:
@@ -403,6 +408,7 @@ with open(ptrn, 'r') as f:
     line = f.readline()
 ax, bx, cx, dx = line.split('\t')
 read_length = len(ax)
+max_read_length = max(max_read_length,read_length)
 ptrn = "\t*\t*\t"
 d = defaultdict(int)
 
@@ -413,7 +419,11 @@ cmd = output_location + "/" + tmp_name + ".ighv"
 with open(cmd) as f:
     for line in f:
         ax, bx, cx, dx = line.split('\t')
+        read_length = len(ax)
+        max_read_length = max(max_read_length,read_length)
         if max(float(ax.count('A'))/read_length, float(ax.count('C'))/read_length, float(ax.count('G'))/read_length, float(ax.count('T'))/read_length) >= .5:
+            continue
+        if read_length < 16:
             continue
         hv[ax] += 1
         hv[revcom(ax)] += 1
@@ -436,7 +446,11 @@ cmd = output_location + "/" + tmp_name + ".ighc"
 with open(cmd) as f:
     for line in f:
         ax, bx, cx, dx = line.split('\t')
+        read_length = len(ax)
+        max_read_length = max(max_read_length,read_length)
         if max(float(ax.count('A'))/read_length, float(ax.count('C'))/read_length, float(ax.count('G'))/read_length, float(ax.count('T'))/read_length) >= .5:
+            continue
+        if read_length < 16:
             continue
         hc[ax] += 1
         hc[revcom(ax)] += 1
@@ -459,7 +473,11 @@ cmd = output_location + "/" + tmp_name + ".iglv"
 with open(cmd) as f:
     for line in f:
         ax, bx, cx, dx = line.split('\t')
+        read_length = len(ax)
+        max_read_length = max(max_read_length,read_length)
         if max(float(ax.count('A'))/read_length, float(ax.count('C'))/read_length, float(ax.count('G'))/read_length, float(ax.count('T'))/read_length) >= .5:
+            continue
+        if read_length < 16:
             continue
         lv[ax] += 1
         lv[revcom(ax)] += 1
@@ -482,7 +500,11 @@ cmd = output_location + "/" + tmp_name + ".iglc"
 with open(cmd) as f:
     for line in f:
         ax, bx, cx, dx = line.split('\t')
+        read_length = len(ax)
+        max_read_length = max(max_read_length,read_length)
         if max(float(ax.count('A'))/read_length, float(ax.count('C'))/read_length, float(ax.count('G'))/read_length, float(ax.count('T'))/read_length) >= .5:
+            continue
+        if read_length < 16:
             continue
         lc[ax] += 1
         lc[revcom(ax)] += 1
@@ -501,14 +523,14 @@ d.clear()
 
 if __name__ == '__main__':
     p1 = Process(target=heavy,
-                 args=(hc_end, hc_start, hc, hv, results.VERBOSE, read_length, results.name, output_location))
+                 args=(hc_end, hc_start, hc, hv, results.VERBOSE, max_read_length, results.name, output_location))
     p2 = Process(target=light,
-                 args=(lc_end, lc_start, lc, lv, results.VERBOSE, read_length, results.name, output_location))
+                 args=(lc_end, lc_start, lc, lv, results.VERBOSE, max_read_length, results.name, output_location))
     p1.start()
     p2.start()
     p1.join()
     p2.join()
-    
+
     ptrn = output_location + "/" + tmp_name + ".ighv"
     os.remove(ptrn)
     ptrn = output_location + "/" + tmp_name + ".ighc"

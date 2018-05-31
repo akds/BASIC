@@ -14,7 +14,7 @@ Manual
 http://ttic.uchicago.edu/~aakhan/BASIC/
 
 Version
-1.0.1 (July, 15, 2016)
+1.2 Beta (November 5, 2017)
 
 Contact
 Please contact: aakhan@ttic.edu for any questions or comments.
