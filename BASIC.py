@@ -125,7 +125,7 @@ def parse_args():
                         default='BCR',
                         help='BCR or TCR (default: BCR)')
 
-    parser.add_argument('-p', action='store', dest='constant_value',
+    parser.add_argument('-p', action='store', dest='num_threads',
                         default='2',
                         help='Launch p > 2 threads that will run on separate processors/cores (default: 2)')
 
@@ -146,8 +146,8 @@ def parse_args():
                         help='Paired end (right) FASTQ files. (example: pe_2.fastq)')
 
     parser.add_argument('-g', action='store', dest='genome',
-                        default='hg19',
-                        help='hg19 or mm10 (default: hg19)')
+                        default='human',
+                        help='human or mouse (default: human)')
 
     parser.add_argument('-b', action='store', dest='bowtie',
                         default='./',
@@ -176,10 +176,9 @@ def main():
 
     output_location = "./" + str(re.sub('\W+', '', results.output_location))
     output_file = str(re.sub(r'\W+', '', results.name))
-    tmp_name = results.name
     database = os.path.dirname(os.path.realpath(sys.argv[0])) + "/db/"
 
-    if results.VERBOSE: print(('Run ID: ' + tmp_name ))
+    if results.VERBOSE: print(('Run ID: ' + results.name ))
 
     if (len(results.LEFT) == 0) | (len(results.RIGHT) == 0):
         if len(results.FASTQ) == 0:
@@ -236,118 +235,67 @@ def main():
             print('Program terminated.')
             exit(0)
 
-    valid_genomes = ['hg19', 'mm10']
-    if not (results.genome in valid_genomes):
-        print('Unsupported genome')
-        print('Program terminated.')
-        exit(0)
-    else:
-        db_path = database + results.genome + '_ighc'
-        check_read = os.access(db_path, os.R_OK)
-        if check_read:
-            db_path = database + results.genome + '_*'
-            if results.VERBOSE: print(('Using ' +  db_path + ' genome files ...'))
-        else:
-            db_path = database + results.genome + '_*'
-            print(('Genome index files not found: ' + db_path))
-            print('Check database path (-d) and that index files are readable')
-            print('Program terminated.')
-            exit(0)
-
-    if results.type != 'BCR':
-        print('Currently only BCR assembly is supported')
+    if results.type not in ['BCR', 'TCR']:
+        print('Currently only BCR or TCR assembly is supported')
         print('Program terminated.')
         exit(0)
     else:
         if results.VERBOSE: print(('Assembling ' + results.type + ' sequences ...'))
 
-    if results.VERBOSE: print(('Using ' + results.constant_value + ' threads ...'))
+    valid_genomes = ['human', 'mouse']
+    if not (results.genome in valid_genomes):
+        print('Unsupported genome')
+        print('Program terminated.')
+        exit(0)
+    else:
+        db_path = '{}/{}/{}'.format(database, results.genome, results.type)
+        check_read = os.access('{}/hc'.format(db_path), os.R_OK)
+        if check_read:
+            if results.VERBOSE: print(('Using ' +  db_path + ' genome files ...'))
+        else:
+            print('Genome index files not found: {}'.format(db_path))
+            print('Check database path (-d) and that index files are readable')
+            print('Program terminated.')
+            exit(0)
+
+
+    if results.VERBOSE: print('Using Bowtie2 to find initial seeds using {} threads:'.format(results.num_threads))
+
+    bowtie_base_cmd = "{}/bowtie2 --very-sensitive --quiet \
+        --threads {} --no-hd".format(results.bowtie, results.num_threads)
+
+    awk_cmd = "awk -F'\t'  '{print $10\"\t\"$3\"\t\"$6\"\t\"$4}'"
+    bowtie_options = {'hv': '--norc',
+                      'hc': '--nofw',
+                      'lv': '--norc',
+                      'lc': '--nofw'}
 
     if single == 1:
-        if results.VERBOSE == True: print('Using Bowtie2 to find initial seeds:')
-        try:
-            cmd = results.bowtie + "/bowtie2 --very-sensitive  --quiet --norc --no-hd -x " + database + results.genome + "_ighv " + \
-                  "--threads " + results.constant_value + " -U " + results.FASTQ + " | awk -F'\t'  '{print $10\"\t\"$3\"\t\"$6\"\t\"$4}'  >" + output_location + "/" + tmp_name + ".ighv"
-            if results.VERBOSE == True: print("Mapping reads to heavy chain variable region ...")
-            proc = subprocess.check_call(cmd, shell=True)
-        except:
-            print('Error Bowtie2 not installed or not found in path')
-            print('Program terminated.')
-            exit(0)
-
-        try:
-            cmd = results.bowtie + "/bowtie2 --very-sensitive --quiet --nofw --no-hd -x " + database + results.genome + "_ighc " + \
-                  "--threads " + results.constant_value + " -U " + results.FASTQ + " | awk -F'\t'  '{print $10\"\t\"$3\"\t\"$6\"\t\"$4}'  >" + output_location + "/" + tmp_name + ".ighc"
-            if results.VERBOSE == True: print("Mapping reads to heavy chain constant region ...")
-            proc = subprocess.check_call(cmd, shell=True)
-        except:
-            print('Error Bowtie2 not installed or not found in path')
-            print('Program terminated.')
-            exit(0)
-
-        try:
-            cmd = results.bowtie + "/bowtie2 --very-sensitive  --quiet --norc  --no-hd -x " + database + results.genome + "_iglv " + \
-                  "--threads " + results.constant_value + " -U " + results.FASTQ + " | awk -F'\t'  '{print $10\"\t\"$3\"\t\"$6\"\t\"$4}' >" + output_location + "/" + tmp_name + ".iglv"
-            if results.VERBOSE == True: print("Mapping reads to light chain variable region ...")
-            proc = subprocess.check_call(cmd, shell=True)
-        except:
-            print('Error Bowtie2 not installed or not found in path')
-            print('Program terminated.')
-            exit(0)
-
-        try:
-            cmd = results.bowtie + "/bowtie2 --very-sensitive  --quiet --nofw  --no-hd -x " + database + results.genome + "_iglc " + \
-                  "--threads " + results.constant_value + " -U " + results.FASTQ + " | awk -F'\t'  '{print $10\"\t\"$3\"\t\"$6\"\t\"$4}'  >" + output_location + "/" + tmp_name + ".iglc"
-            if results.VERBOSE == True: print("Mapping reads to light chain constant region ...")
-            proc = subprocess.check_call(cmd, shell=True)
-        except:
-            print('Error Bowtie2 not installed or not found in path')
-            print('Program terminated.')
-            exit(0)
-
+        seq_options = "-U ".format(results.FASTQ)
     elif paired == 1:
-        if results.VERBOSE == True: print('Using Bowtie2 to find initial seeds:')
+        seq_options = "-U {},{}".format(results.LEFT, results.RIGHT)
+
+    for chain_type in ['hv', 'hc', 'lv', 'lc']:
+
+        output_path = '{}/{}.{}'.format(output_location, results.name, chain_type)
+        if results.VERBOSE:
+            print('Mapping reads to {}...'.format(chain_type))
+
         try:
-            cmd = results.bowtie + "/bowtie2 --very-sensitive  --quiet --norc --no-hd -x " + database + results.genome + "_ighv " + \
-                  "--threads " + results.constant_value + " -U " + results.LEFT + "," + results.RIGHT + " | awk -F'\t'  '{print $10\"\t\"$3\"\t\"$6\"\t\"$4}'  >" + output_location + "/" + tmp_name + ".ighv"
-            if results.VERBOSE == True: print("Mapping reads to heavy chain variable region ...")
+            cmd = "{} {} -x {}/{} {} | {} > {} ".format(bowtie_base_cmd,
+                                                        bowtie_options[chain_type],
+                                                        db_path,
+                                                        chain_type,
+                                                        seq_options,
+                                                        awk_cmd,
+                                                        output_path)
             proc = subprocess.check_call(cmd, shell=True)
         except:
             print('Error Bowtie2 not installed or not found in path')
             print('Program terminated.')
             exit(0)
 
-        try:
-            cmd = results.bowtie + "/bowtie2 --very-sensitive --quiet --nofw --no-hd -x " + database + results.genome + "_ighc " + \
-                  "--threads " + results.constant_value + " -U " + results.LEFT + "," + results.RIGHT + " | awk -F'\t'  '{print $10\"\t\"$3\"\t\"$6\"\t\"$4}'  >" + output_location + "/" + tmp_name + ".ighc"
-            if results.VERBOSE == True: print("Mapping reads to heavy chain constant region ...")
-            proc = subprocess.check_call(cmd, shell=True)
-        except:
-            print('Error Bowtie2 not installed or not found in path')
-            print('Program terminated.')
-            exit(0)
-
-        try:
-            cmd = results.bowtie + "/bowtie2 --very-sensitive  --quiet --norc  --no-hd -x " + database + results.genome + "_iglv " + \
-                  "--threads " + results.constant_value + " -U " + results.LEFT + "," + results.RIGHT + " | awk -F'\t'  '{print $10\"\t\"$3\"\t\"$6\"\t\"$4}'  >" + output_location + "/" + tmp_name + ".iglv"
-            if results.VERBOSE == True: print("Mapping reads to light chain variable region ...")
-            proc = subprocess.check_call(cmd, shell=True)
-        except:
-            print('Error Bowtie2 not installed or not found in path')
-            print('Program terminated.')
-            exit(0)
-
-        try:
-            cmd = results.bowtie + "/bowtie2 --very-sensitive  --quiet --nofw  --no-hd -x " + database + results.genome + "_iglc " + \
-                  "--threads " + results.constant_value + " -U " + results.LEFT + "," + results.RIGHT + " | awk -F'\t'  '{print $10\"\t\"$3\"\t\"$6\"\t\"$4}' >" + output_location + "/" + tmp_name + ".iglc"
-            if results.VERBOSE == True: print("Mapping reads to light chain constant region ...")
-            proc = subprocess.check_call(cmd, shell=True)
-        except:
-            print('Error Bowtie2 not installed or not found in path')
-            print('Program terminated.')
-            exit(0)
-
-    ptrn = output_location + "/" + tmp_name + ".ighv"
+    ptrn = output_location + "/" + results.name + ".hv"
     with open(ptrn, 'r') as f:
         line = f.readline()
     ax, bx, cx, dx = line.split('\t')
@@ -359,7 +307,7 @@ def main():
     # anchor start of heavy chain
     hv = defaultdict(int)
     if results.VERBOSE: print("Searching for an anchor in heavy chain variable region ...")
-    cmd = output_location + "/" + tmp_name + ".ighv"
+    cmd = output_location + "/" + results.name + ".hv"
     with open(cmd) as f:
         for line in f:
             ax, bx, cx, dx = line.split('\t')
@@ -377,7 +325,7 @@ def main():
         hc_start = max(d, key=d.get)
         hc_start = hc_start.strip('N')
     except (ValueError, TypeError):
-        print(('Error: ' + tmp_name + ' did not map to heavy chain variable region.'))
+        print(('Error: ' + results.name + ' did not map to heavy chain variable region.'))
         print('Program terminated.')
         exit(0)
     if results.VERBOSE: print(("anchor: " + hc_start))
@@ -386,7 +334,7 @@ def main():
     # anchor end of heavy chain
     hc = defaultdict(int)
     if results.VERBOSE: print("Searching for an anchor in heavy chain constant region ...")
-    cmd = output_location + "/" + tmp_name + ".ighc"
+    cmd = output_location + "/" + results.name + ".hc"
     with open(cmd) as f:
         for line in f:
             ax, bx, cx, dx = line.split('\t')
@@ -404,7 +352,7 @@ def main():
         hc_end = max(d, key=d.get)
         hc_end = hc_end.strip('N')
     except (ValueError, TypeError):
-        print(('Error: ' + tmp_name + ' did not map to heavy chain constant region.'))
+        print(('Error: ' + results.name + ' did not map to heavy chain constant region.'))
         print('Program terminated.')
         exit(0)
     if results.VERBOSE: print(("anchor: " + revcom(hc_end)))
@@ -413,7 +361,7 @@ def main():
     # anchor start of light chain
     lv = defaultdict(int)
     if results.VERBOSE: print("Searching for an anchor in light chain variable region ...")
-    cmd = output_location + "/" + tmp_name + ".iglv"
+    cmd = output_location + "/" + results.name + ".lv"
     with open(cmd) as f:
         for line in f:
             ax, bx, cx, dx = line.split('\t')
@@ -431,7 +379,7 @@ def main():
         lc_start = max(d, key=d.get)
         lc_start = lc_start.strip('N')
     except (ValueError, TypeError):
-        print(('Error: ' + tmp_name + ' did not map to light chain variable region.'))
+        print(('Error: ' + results.name + ' did not map to light chain variable region.'))
         print('Program terminated.')
         exit(0)
     if results.VERBOSE: print(("anchor: " + lc_start))
@@ -440,7 +388,7 @@ def main():
     # anchor end of light chain
     lc = defaultdict(int)
     if results.VERBOSE: print("Searching for an anchor in light chain constant region ...")
-    cmd = output_location + "/" + tmp_name + ".iglc"
+    cmd = output_location + "/" + results.name + ".lc"
     with open(cmd) as f:
         for line in f:
             ax, bx, cx, dx = line.split('\t')
@@ -458,7 +406,7 @@ def main():
         lc_end = max(d, key=d.get)
         lc_end = lc_end.strip('N')
     except (ValueError, TypeError):
-        print(('Error: ' + tmp_name + ' did not map to light chain constant region.'))
+        print(('Error: ' + results.name + ' did not map to light chain constant region.'))
         print('Program terminated.')
         exit(0)
     if results.VERBOSE: print(("anchor: " + revcom(lc_end)))
@@ -474,13 +422,13 @@ def main():
     p1.join()
     p2.join()
 
-    ptrn = output_location + "/" + tmp_name + ".ighv"
+    ptrn = output_location + "/" + results.name + ".hv"
     os.remove(ptrn)
-    ptrn = output_location + "/" + tmp_name + ".ighc"
+    ptrn = output_location + "/" + results.name + ".hc"
     os.remove(ptrn)
-    ptrn = output_location + "/" + tmp_name + ".iglv"
+    ptrn = output_location + "/" + results.name + ".lv"
     os.remove(ptrn)
-    ptrn = output_location + "/" + tmp_name + ".iglc"
+    ptrn = output_location + "/" + results.name + ".lc"
     os.remove(ptrn)
 
 
