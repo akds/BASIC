@@ -45,7 +45,7 @@ def splitread(s,rl):
     return table
 
 
-def extend_right(s, d, verb, rl):
+def extend(s, d, verb, rl, reverse_comp=False):
     while 1:
         table = splitread(s, rl)
         edges = [sys.maxsize]
@@ -82,65 +82,28 @@ def extend_right(s, d, verb, rl):
             return s
         s += best_k[best_c:]
         s = s.strip('N')
-        if verb: print(s)
-    return s
-
-
-def extend_rc_left(s, d, verb, rl):
-    while 1:
-        table = splitread(s, rl)
-        edges = [sys.maxsize]
-        best_c = 0
-        best_k = ''
-        try:
-            cache_dict = {k: v for (k, v) in d.iteritems() if table[-1] in k}
-        except AttributeError:
-            cache_dict = {k: v for (k, v) in d.items() if table[-1] in k}
-
-        for hc_start_block in table:
-            try:
-                match_dict = {k: v for (k, v) in cache_dict.iteritems() if re.match(hc_start_block, k) is not None}
-            except AttributeError:
-                match_dict = {k: v for (k, v) in cache_dict.items() if re.match(hc_start_block, k) is not None}
-
-            if len(match_dict) == 0:
-                continue
-            n = float(sum(match_dict.values()) + .5)
-            v = list(match_dict.values())
-            p = [(float(x) / n) for x in v]
-            entropy = sum([(-1 * x * math.log(x, 2)) for x in p])
-            k = list(match_dict.keys())
-            if (entropy <= min(edges)) and (max(v) > 1):
-                best_k = k[v.index(max(v))]
-                best_rl = len(best_k)
-                best_c = -(best_rl - len(hc_start_block))
-                edges.append(entropy)
+        if verb:
+            if reverse_comp:
+                print(revcom(s))
             else:
-                continue
-        if len(edges) == 1:
-            return s
-        if best_k.strip('N') in s:
-            return s
-        s += best_k[best_c:]
-        s = s.strip('N')
-        if verb: print((revcom(s)))
+                print(s)
     return s
 
 
 def stitch(chain_end, chain_start, const, variable, verb, read_length, cellid, output_location, chain_name):
     if verb: print("Stitching {} chain sequence (5' <--- 3') ...".format(chain_name))
-    tmp = revcom(extend_rc_left(chain_end, const, verb, read_length))
+    tmp = revcom(extend(chain_end, const, verb, read_length, reverse_comp=True))
     if verb: print("Stitching {} chain sequence (5' ---> 3') ...".format(chain_name))
-    const_token = extend_right(tmp, variable, verb, read_length)
+    const_token = extend(tmp, variable, verb, read_length)
 
     if (chain_start in const_token) or (revcom(chain_start) in const_token):
         if verb: print("Path found!")
         result = ">cell_id={};{}_chain;BASIC\n{}\n".format(cellid, chain_name, const_token)
     else:
         if verb: print("Re-stitching {} chain sequence (5' ---> 3') ...".format(chain_name))
-        tmp = extend_right(chain_start, variable, verb, read_length)
+        tmp = extend(chain_start, variable, verb, read_length)
         if verb: print("Re-stitching {} chain sequence (5' <--- 3') ...".format(chain_name))
-        var_token = revcom(extend_rc_left(revcom(tmp), const, verb, read_length))
+        var_token = revcom(extend(revcom(tmp), const, verb, read_length, reverse_comp=True))
         if (revcom(chain_end) in var_token) or (chain_end in var_token):
             if verb: print("Path found!")
             result = ">cell_id={};{}_chain;BASIC\n{}\n".format(cellid, chain_name, var_token)
