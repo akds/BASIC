@@ -308,7 +308,7 @@ def main():
                       'lc': '--nofw'}
 
     if single == 1:
-        seq_options = "-U ".format(results.FASTQ)
+        seq_options = "-U {}".format(results.FASTQ)
     elif paired == 1:
         seq_options = "-U {},{}".format(results.LEFT, results.RIGHT)
 
