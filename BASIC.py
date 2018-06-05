@@ -26,8 +26,8 @@ def index2seq(vec):
     return ''.join(x)
 
 
+basecomplement = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A', 'N':'N'}
 def complement(s):
-    basecomplement = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A', 'N':'N'}
     letters = list(s)
     letters = [basecomplement[base] for base in letters]
     return ''.join(letters)
@@ -58,9 +58,9 @@ def extend(s, d, verb, rl, reverse_comp=False):
 
         for hc_start_block in table:
             try:
-                match_dict = {k: v for (k, v) in cache_dict.iteritems() if re.match(hc_start_block, k) is not None}
+                match_dict = {k: v for (k, v) in cache_dict.iteritems() if k.startswith(hc_start_block)}
             except AttributeError:
-                match_dict = {k: v for (k, v) in cache_dict.items() if re.match(hc_start_block, k) is not None}
+                match_dict = {k: v for (k, v) in cache_dict.items() if k.startswith(hc_start_block)}
 
             if len(match_dict) == 0:
                 continue
@@ -115,6 +115,39 @@ def stitch(chain_end, chain_start, const, variable, verb, read_length, cellid, o
     cmd = output_location + "/" + cellid + ".fasta"
     with open(cmd, "a") as text_file:
         text_file.write(result)
+
+
+def find_anchor(mapped_output):
+    """ find the sequence anchor within processed bowtie2 output """
+
+    max_read_length = 0
+
+    unmapped_ptrn = "\t*\t*\t"
+
+    all_reads = defaultdict(int)
+    mapped_reads = defaultdict(int)
+    with open(mapped_output) as f:
+        for line in f:
+            ax, bx, cx, dx = line.split('\t')
+            read_length = len(ax)
+            max_read_length = max(max_read_length, read_length)
+            if max([float(ax.count(base))/read_length for base in ['A', 'T', 'G', 'C']]) >= .5:
+                continue
+            if read_length < 16:
+                continue
+            all_reads[ax] += 1
+            all_reads[revcom(ax)] += 1
+            if unmapped_ptrn not in line:
+                mapped_reads[ax] += 1
+    try:
+        anchor = max(mapped_reads, key=mapped_reads.get)
+        anchor = anchor.strip('N')
+    except (ValueError, TypeError):
+        print('Error: reads did not map to {}'.format(mapped_output.split('.')[-1]))
+        print('Program terminated.')
+        exit(0)
+
+    return anchor, all_reads, max_read_length
 
 
 def parse_args():
@@ -176,7 +209,7 @@ def main():
 
     output_location = "./" + str(re.sub('\W+', '', results.output_location))
     output_file = str(re.sub(r'\W+', '', results.name))
-    database = os.path.dirname(os.path.realpath(sys.argv[0])) + "/db/"
+    database = os.path.dirname(os.path.realpath(sys.argv[0])) + "/db"
 
     if results.VERBOSE: print(('Run ID: ' + results.name ))
 
@@ -259,11 +292,15 @@ def main():
             exit(0)
 
 
+    # Bowtie2 for mapping reads
     if results.VERBOSE: print('Using Bowtie2 to find initial seeds using {} threads:'.format(results.num_threads))
 
     bowtie_base_cmd = "{}/bowtie2 --very-sensitive --quiet \
         --threads {} --no-hd".format(results.bowtie, results.num_threads)
 
+    # awk extracts read sequence (column 10), name of ref sequence aligned to (3)
+    # CIGAR representation of alignment (6), and 1-based offset into the forward
+    # reference strand where leftmost character of the alignment occurs (4)
     awk_cmd = "awk -F'\t'  '{print $10\"\t\"$3\"\t\"$6\"\t\"$4}'"
     bowtie_options = {'hv': '--norc',
                       'hc': '--nofw',
@@ -275,7 +312,9 @@ def main():
     elif paired == 1:
         seq_options = "-U {},{}".format(results.LEFT, results.RIGHT)
 
-    for chain_type in ['hv', 'hc', 'lv', 'lc']:
+    # chain types- heavy variable (hv), heavy constant (hc) and likewise for light
+    chains = ['hv', 'hc', 'lv', 'lc']
+    for chain_type in chains:
 
         output_path = '{}/{}.{}'.format(output_location, results.name, chain_type)
         if results.VERBOSE:
@@ -289,147 +328,46 @@ def main():
                                                         seq_options,
                                                         awk_cmd,
                                                         output_path)
+
+            if results.VERBOSE: print("Calling bowtie with command:\n{}".format(cmd))
             proc = subprocess.check_call(cmd, shell=True)
         except:
             print('Error Bowtie2 not installed or not found in path')
             print('Program terminated.')
             exit(0)
 
-    ptrn = output_location + "/" + results.name + ".hv"
-    with open(ptrn, 'r') as f:
-        line = f.readline()
-    ax, bx, cx, dx = line.split('\t')
-    read_length = len(ax)
-    max_read_length = max(max_read_length,read_length)
-    ptrn = "\t*\t*\t"
-    d = defaultdict(int)
+    # find anchors and collapse reads into dictionary
+    anchors_str = {}
+    anchors_dict = {}
+    for chain_type in chains:
+        if results.VERBOSE: print("Searching for an anchor in {} ...".format(chain_type))
 
-    # anchor start of heavy chain
-    hv = defaultdict(int)
-    if results.VERBOSE: print("Searching for an anchor in heavy chain variable region ...")
-    cmd = output_location + "/" + results.name + ".hv"
-    with open(cmd) as f:
-        for line in f:
-            ax, bx, cx, dx = line.split('\t')
-            read_length = len(ax)
-            max_read_length = max(max_read_length,read_length)
-            if max(float(ax.count('A'))/read_length, float(ax.count('C'))/read_length, float(ax.count('G'))/read_length, float(ax.count('T'))/read_length) >= .5:
-                continue
-            if read_length < 16:
-                continue
-            hv[ax] += 1
-            hv[revcom(ax)] += 1
-            if ptrn not in line:
-                d[ax] += 1
-    try:
-        hc_start = max(d, key=d.get)
-        hc_start = hc_start.strip('N')
-    except (ValueError, TypeError):
-        print(('Error: ' + results.name + ' did not map to heavy chain variable region.'))
-        print('Program terminated.')
-        exit(0)
-    if results.VERBOSE: print(("anchor: " + hc_start))
-    d.clear()
+        output_path = "{}/{}.{}".format(output_location, results.name, chain_type)
+        anchors_str[chain_type], anchors_dict[chain_type], max_rl = find_anchor(output_path)
+        max_read_length = max(max_read_length, max_rl)
 
-    # anchor end of heavy chain
-    hc = defaultdict(int)
-    if results.VERBOSE: print("Searching for an anchor in heavy chain constant region ...")
-    cmd = output_location + "/" + results.name + ".hc"
-    with open(cmd) as f:
-        for line in f:
-            ax, bx, cx, dx = line.split('\t')
-            read_length = len(ax)
-            max_read_length = max(max_read_length,read_length)
-            if max(float(ax.count('A'))/read_length, float(ax.count('C'))/read_length, float(ax.count('G'))/read_length, float(ax.count('T'))/read_length) >= .5:
-                continue
-            if read_length < 16:
-                continue
-            hc[ax] += 1
-            hc[revcom(ax)] += 1
-            if ptrn not in line:
-                d[ax] += 1
-    try:
-        hc_end = max(d, key=d.get)
-        hc_end = hc_end.strip('N')
-    except (ValueError, TypeError):
-        print(('Error: ' + results.name + ' did not map to heavy chain constant region.'))
-        print('Program terminated.')
-        exit(0)
-    if results.VERBOSE: print(("anchor: " + revcom(hc_end)))
-    d.clear()
+        if results.VERBOSE:
+            if chain_type.endswith('v'):
+                print("anchor: {}".format(anchors_str[chain_type]))
+            else:
+                print("anchor: {}".format(revcom(anchors_str[chain_type])))
 
-    # anchor start of light chain
-    lv = defaultdict(int)
-    if results.VERBOSE: print("Searching for an anchor in light chain variable region ...")
-    cmd = output_location + "/" + results.name + ".lv"
-    with open(cmd) as f:
-        for line in f:
-            ax, bx, cx, dx = line.split('\t')
-            read_length = len(ax)
-            max_read_length = max(max_read_length,read_length)
-            if max(float(ax.count('A'))/read_length, float(ax.count('C'))/read_length, float(ax.count('G'))/read_length, float(ax.count('T'))/read_length) >= .5:
-                continue
-            if read_length < 16:
-                continue
-            lv[ax] += 1
-            lv[revcom(ax)] += 1
-            if ptrn not in line:
-                d[ax] += 1
-    try:
-        lc_start = max(d, key=d.get)
-        lc_start = lc_start.strip('N')
-    except (ValueError, TypeError):
-        print(('Error: ' + results.name + ' did not map to light chain variable region.'))
-        print('Program terminated.')
-        exit(0)
-    if results.VERBOSE: print(("anchor: " + lc_start))
-    d.clear()
-
-    # anchor end of light chain
-    lc = defaultdict(int)
-    if results.VERBOSE: print("Searching for an anchor in light chain constant region ...")
-    cmd = output_location + "/" + results.name + ".lc"
-    with open(cmd) as f:
-        for line in f:
-            ax, bx, cx, dx = line.split('\t')
-            read_length = len(ax)
-            max_read_length = max(max_read_length,read_length)
-            if max(float(ax.count('A'))/read_length, float(ax.count('C'))/read_length, float(ax.count('G'))/read_length, float(ax.count('T'))/read_length) >= .5:
-                continue
-            if read_length < 16:
-                continue
-            lc[ax] += 1
-            lc[revcom(ax)] += 1
-            if ptrn not in line:
-                d[ax] += 1
-    try:
-        lc_end = max(d, key=d.get)
-        lc_end = lc_end.strip('N')
-    except (ValueError, TypeError):
-        print(('Error: ' + results.name + ' did not map to light chain constant region.'))
-        print('Program terminated.')
-        exit(0)
-    if results.VERBOSE: print(("anchor: " + revcom(lc_end)))
-    d.clear()
-    ### End of single end sequencing processing
-
+    # stitch ends of each chain together
     p1 = Process(target=stitch,
-                 args=(hc_end, hc_start, hc, hv, results.VERBOSE, max_read_length, results.name, output_location, 'heavy'))
+                 args=(anchors_str['hc'], anchors_str['hv'], anchors_dict['hc'], anchors_dict['hv'],
+                       results.VERBOSE, max_read_length, results.name, output_location, 'heavy'))
     p2 = Process(target=stitch,
-                 args=(lc_end, lc_start, lc, lv, results.VERBOSE, max_read_length, results.name, output_location, 'light'))
+                 args=(anchors_str['lc'], anchors_str['lv'], anchors_dict['lc'], anchors_dict['lv'],
+                       results.VERBOSE, max_read_length, results.name, output_location, 'light'))
     p1.start()
     p2.start()
     p1.join()
     p2.join()
 
-    ptrn = output_location + "/" + results.name + ".hv"
-    os.remove(ptrn)
-    ptrn = output_location + "/" + results.name + ".hc"
-    os.remove(ptrn)
-    ptrn = output_location + "/" + results.name + ".lv"
-    os.remove(ptrn)
-    ptrn = output_location + "/" + results.name + ".lc"
-    os.remove(ptrn)
+    # remove intermediate bowtie outputs
+    for chain_type in chains:
+        output_path = "{}/{}.{}".format(output_location, results.name, chain_type)
+        os.remove(output_path)
 
 
 if __name__ == '__main__':
