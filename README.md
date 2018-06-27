@@ -27,10 +27,11 @@ python BASIC.py -h
 http://ttic.uchicago.edu/~aakhan/BASIC/
 
 ### Version
-1.3 (2018/06/01)
+1.3.1 (2018/06/27)
 
 ### Contact
-Please contact: aakhan@ttic.edu for any questions or comments.
+Please contact: Aly Azeem Khan <aakhan@ttic.edu> for any questions or comments.
+More recent updates have been contributed by: Derek Croote <dcroote@stanford.edu>
 
 ### License
 Software provided to academic users under MIT License
