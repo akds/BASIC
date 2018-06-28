@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 from multiprocessing import Process
 import os.path
 import itertools
