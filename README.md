@@ -1,5 +1,6 @@
 ## BASIC: BCR (and now TCR) assembly from single cells
 
+[![Build Status](https://travis-ci.org/akds/BASIC.svg?branch=master)](https://travis-ci.org/akds/BASIC)
 
 ### Pre-requisites and installation
 * BASIC was developed and tested using Python 3.4.4 and 2.7.10
