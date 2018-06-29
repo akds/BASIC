@@ -19,11 +19,10 @@ install:
   - conda info -a
   - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION
   - conda config --add channels bioconda
-  - conda install bowtie2 biopython
+  - conda install bowtie2 biopython pytest
   - source activate test-environment
 script:
   - bowtie2=$(dirname $(which bowtie2))
+  - which pytest
   - python BASIC.py -b $bowtie2 -SE examples/cell_A1/ERR1421621_1M_reads.fastq.gz -g human -i BCR -n SE_test
   - pytest
-  
-
