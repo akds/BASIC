@@ -187,6 +187,10 @@ def parse_args():
                         default='./',
                         help='Absolute path to directory that contains the bowtie2 executable')
 
+    parser.add_argument('-t', action='store', dest='tmpdir',
+                        default='./',
+                        help='Path to directory for writing intermediate files.')
+
     parser.add_argument('-o', action='store', dest='output_location',
                         default='./',
                         help='Output dir (default: none -- current working directory)')
@@ -317,7 +321,7 @@ def main():
     chains = ['hv', 'hc', 'lv', 'lc']
     for chain_type in chains:
 
-        output_path = '{}/{}.{}'.format(output_location, results.name, chain_type)
+        output_path = '{}/{}.{}'.format(results.tmpdir, results.name, chain_type)
         if results.VERBOSE:
             print('Mapping reads to {}...'.format(chain_type))
 
@@ -343,7 +347,7 @@ def main():
     for chain_type in chains:
         if results.VERBOSE: print("Searching for an anchor in {} ...".format(chain_type))
 
-        output_path = "{}/{}.{}".format(output_location, results.name, chain_type)
+        output_path = "{}/{}.{}".format(results.tmpdir, results.name, chain_type)
         anchors_str[chain_type], anchors_dict[chain_type], max_rl = find_anchor(output_path)
         max_read_length = max(max_read_length, max_rl)
 
@@ -367,7 +371,7 @@ def main():
 
     # remove intermediate bowtie outputs
     for chain_type in chains:
-        output_path = "{}/{}.{}".format(output_location, results.name, chain_type)
+        output_path = "{}/{}.{}".format(results.tmpdir, results.name, chain_type)
         os.remove(output_path)
 
 
