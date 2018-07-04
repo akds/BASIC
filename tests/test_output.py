@@ -1,4 +1,5 @@
 from Bio import SeqIO
+from Bio.Seq import Seq
 
 
 def read_fasta(infile):
@@ -19,3 +20,13 @@ def test_se_human_bcr():
 
     for chain_id, seq in expected.items():
         assert actual[chain_id] == seq
+
+
+def test_pe_human_bcr():
+    sanger = read_fasta('examples/H8_AW1/sanger.fasta')
+    actual = read_fasta('PE_test.fasta')
+
+    # check assembly is inclusive of Sanger result (assembly will contain
+    # additional sequence e.g. V leader)
+    for chain_id, seq in sanger.items():
+        assert seq in actual[chain_id]
