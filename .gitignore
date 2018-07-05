@@ -1,2 +1,5 @@
 .cache/
 __pycache__/
+*.pyc
+SE_test.fasta
+PE_test.fasta
