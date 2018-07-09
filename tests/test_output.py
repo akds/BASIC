@@ -1,5 +1,27 @@
 from Bio import SeqIO
-from Bio.Seq import Seq
+import os
+import subprocess
+import pytest
+
+
+def find_bowtie2_dir():
+    """ Looks for bowtie2 in PATH if specific environmental variable does
+        not exist
+    """
+
+    try:
+        return os.environ['bowtie2']
+    except KeyError:
+        print('No bowtie2 env variable found, searching in $PATH')
+        stdout, stderr = subprocess.Popen(["which", "bowtie2"],
+                                          stdout=subprocess.PIPE,
+                                          stderr=subprocess.PIPE).communicate()
+        if stdout:
+            return os.path.dirname(stdout.strip())
+        else:
+            print('Bowtie2 not found. Please add it to $PATH or export the '
+                  'environmental variable "bowtie2" specifying its directory')
+            exit(1)
 
 
 def read_fasta(infile):
@@ -14,7 +36,20 @@ def read_fasta(infile):
     return recs
 
 
+def run_basic(cmd):
+    bowtie2_path = find_bowtie2_dir()
+    cmd += " -b {}".format(bowtie2_path)
+
+    subprocess.check_call(cmd.split(' '))
+
+
 def test_se_human_bcr():
+
+    cmd = ("python BASIC.py -SE examples/cell_A1/ERR1421621_1M_reads.fastq.gz "
+           "-g human -i BCR -n SE_test")
+
+    run_basic(cmd)
+
     expected = read_fasta('examples/cell_A1/result.fasta')
     actual = read_fasta('SE_test.fasta')
 
@@ -23,6 +58,15 @@ def test_se_human_bcr():
 
 
 def test_pe_human_bcr():
+
+    # run BASIC
+    cmd = ("python BASIC.py "
+           "-PE_1 examples/H8_AW1/R1_100K_reads.fastq.gz "
+           "-PE_2 examples/H8_AW1/R2_100K_reads.fastq.gz "
+           "-g human -i BCR -n PE_test")
+
+    run_basic(cmd)
+
     sanger = read_fasta('examples/H8_AW1/sanger.fasta')
     actual = read_fasta('PE_test.fasta')
 

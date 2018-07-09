@@ -22,8 +22,5 @@ install:
   - conda install bowtie2 biopython pytest
   - source activate test-environment
 script:
-  - bowtie2=$(dirname $(which bowtie2))
-  - which pytest
-  - python BASIC.py -b $bowtie2 -SE examples/cell_A1/ERR1421621_1M_reads.fastq.gz -g human -i BCR -n SE_test
-  - python BASIC.py -b $bowtie2 -PE_1 examples/H8_AW1/R1_100K_reads.fastq.gz -PE_2 examples/H8_AW1/R2_100K_reads.fastq.gz -g human -i BCR -n PE_test
+  - export bowtie2=$(dirname $(which bowtie2))
   - pytest -v
