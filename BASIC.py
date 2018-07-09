@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from multiprocessing import Process
+from multiprocessing import Process, Queue
 import os.path
 import itertools
 import re
@@ -91,7 +91,7 @@ def extend(s, d, verb, rl, reverse_comp=False):
     return s
 
 
-def stitch(chain_end, chain_start, const, variable, verb, read_length, cellid, output_location, chain_name):
+def stitch(chain_end, chain_start, const, variable, verb, read_length, cellid, chain_name, result_queue):
     if verb: print("Stitching {} chain sequence (5' <--- 3') ...".format(chain_name))
     tmp = revcom(extend(chain_end, const, verb, read_length, reverse_comp=True))
     if verb: print("Stitching {} chain sequence (5' ---> 3') ...".format(chain_name))
@@ -113,9 +113,7 @@ def stitch(chain_end, chain_start, const, variable, verb, read_length, cellid, o
             result = ">cell_id={};{}_chain[variable_region_contig];BASIC\n{}\n".format(cellid, chain_name, var_token)
             result +=">cell_id={};{}_chain[constant_region_contig];BASIC\n{}\n".format(cellid, chain_name, const_token)
 
-    cmd = output_location + "/" + cellid + ".fasta"
-    with open(cmd, "a") as text_file:
-        text_file.write(result)
+    result_queue.put({chain_name: result})
 
 
 def find_anchor(mapped_output):
@@ -149,6 +147,11 @@ def find_anchor(mapped_output):
         exit(0)
 
     return anchor, all_reads, max_read_length
+
+
+def write_fasta_str(str_out, output_file):
+    with open(output_file, 'a') as out:
+        out.write(str_out)
 
 
 def parse_args():
@@ -357,17 +360,30 @@ def main():
             else:
                 print("anchor: {}".format(revcom(anchors_str[chain_type])))
 
-    # stitch ends of each chain together
+    # stitch ends of each chain together in separate processes, putting results into a queue
+    q = Queue()
     p1 = Process(target=stitch,
                  args=(anchors_str['hc'], anchors_str['hv'], anchors_dict['hc'], anchors_dict['hv'],
-                       results.VERBOSE, max_read_length, results.name, output_location, 'heavy'))
+                       results.VERBOSE, max_read_length, results.name, 'heavy', q))
     p2 = Process(target=stitch,
                  args=(anchors_str['lc'], anchors_str['lv'], anchors_dict['lc'], anchors_dict['lv'],
-                       results.VERBOSE, max_read_length, results.name, output_location, 'light'))
+                       results.VERBOSE, max_read_length, results.name, 'light', q))
     p1.start()
     p2.start()
+
+    # get the result of the two processes
+    fasta_res = {}
+    for i in [0, 1]:
+        fasta_res.update(q.get())
+
+    # wait for processes to finish
     p1.join()
     p2.join()
+
+    combined_fasta_str = ''.join([fasta_res[x] for x in ['heavy', 'light']])
+
+    outfile = '{}/{}.fasta'.format(output_location, results.name)
+    write_fasta_str(combined_fasta_str, outfile)
 
     # remove intermediate bowtie outputs
     for chain_type in chains:
