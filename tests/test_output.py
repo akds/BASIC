@@ -12,7 +12,6 @@ def find_bowtie2_dir():
     try:
         return os.environ['bowtie2']
     except KeyError:
-        print('No bowtie2 env variable found, searching in $PATH')
         stdout, stderr = subprocess.Popen(["which", "bowtie2"],
                                           stdout=subprocess.PIPE,
                                           stderr=subprocess.PIPE).communicate()
@@ -41,7 +40,6 @@ def run_basic(cmd):
     cmd += " -b {}".format(bowtie2_path)
 
     subprocess.check_call(cmd.split(' '))
-
 
 def test_se_human_bcr():
 
@@ -74,3 +72,28 @@ def test_pe_human_bcr():
     # additional sequence e.g. V leader)
     for chain_id, seq in sanger.items():
         assert seq in actual[chain_id]
+
+
+def test_empty_fail_without_partial_arg():
+
+    subprocess.check_call(["touch", "empty_file.fasta"])
+
+    cmd = ("python BASIC.py -SE empty_file.fasta "
+           "-g human -i BCR -n no_partial")
+
+    with pytest.raises(subprocess.CalledProcessError):
+        run_basic(cmd)
+
+
+def test_empty_success_on_partial_arg():
+
+    # an empty fasta as input should pass with the partial argument
+    subprocess.check_call(["touch", "empty_file.fasta"])
+
+    cmd = ("python BASIC.py -SE empty_file.fasta "
+           "-g human -i BCR -n partial_success -a")
+
+    run_basic(cmd)
+
+    # empty result file
+    assert os.stat('partial_success.fasta').st_size == 0

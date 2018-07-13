@@ -92,26 +92,41 @@ def extend(s, d, verb, rl, reverse_comp=False):
 
 
 def stitch(chain_end, chain_start, const, variable, verb, read_length, cellid, chain_name, result_queue):
-    if verb: print("Stitching {} chain sequence (5' <--- 3') ...".format(chain_name))
-    tmp = revcom(extend(chain_end, const, verb, read_length, reverse_comp=True))
-    if verb: print("Stitching {} chain sequence (5' ---> 3') ...".format(chain_name))
-    const_token = extend(tmp, variable, verb, read_length)
+    if chain_end:
+        if verb: print("Stitching {} chain sequence (5' <--- 3') ...".format(chain_name))
+        tmp = revcom(extend(chain_end, const, verb, read_length, reverse_comp=True))
+        if verb: print("Stitching {} chain sequence (5' ---> 3') ...".format(chain_name))
+        const_token = extend(tmp, variable, verb, read_length)
+    else:
+        const_token = ''
 
-    if (chain_start in const_token) or (revcom(chain_start) in const_token):
-        if verb: print("Path found!")
+    if chain_start and ((chain_start in const_token) or (revcom(chain_start) in const_token)):
+        if verb: print("Path found for the {} chain!".format(chain_name))
         result = ">cell_id={};{}_chain;BASIC\n{}\n".format(cellid, chain_name, const_token)
     else:
-        if verb: print("Re-stitching {} chain sequence (5' ---> 3') ...".format(chain_name))
-        tmp = extend(chain_start, variable, verb, read_length)
-        if verb: print("Re-stitching {} chain sequence (5' <--- 3') ...".format(chain_name))
-        var_token = revcom(extend(revcom(tmp), const, verb, read_length, reverse_comp=True))
-        if (revcom(chain_end) in var_token) or (chain_end in var_token):
-            if verb: print("Path found!")
+        if chain_start:
+            if verb: print("Re-stitching {} chain sequence (5' ---> 3') ...".format(chain_name))
+            tmp = extend(chain_start, variable, verb, read_length)
+            if verb: print("Re-stitching {} chain sequence (5' <--- 3') ...".format(chain_name))
+            var_token = revcom(extend(revcom(tmp), const, verb, read_length, reverse_comp=True))
+        else:
+            var_token = ''
+        if chain_end and ((revcom(chain_end) in var_token) or (chain_end in var_token)):
+            if verb: print("Path found for the {} chain!".format(chain_name))
             result = ">cell_id={};{}_chain;BASIC\n{}\n".format(cellid, chain_name, var_token)
         else:
-            if verb: print("Path not found!")
-            result = ">cell_id={};{}_chain[variable_region_contig];BASIC\n{}\n".format(cellid, chain_name, var_token)
-            result +=">cell_id={};{}_chain[constant_region_contig];BASIC\n{}\n".format(cellid, chain_name, const_token)
+            if verb: print("Path not found for the {} chain!".format(chain_name))
+            result = ''
+            if var_token:
+                if verb: print("However, found partial {} chain variable region contig".format(chain_name))
+                result += ">cell_id={};{}_chain[variable_region_contig];BASIC\n{}\n".format(cellid, chain_name, var_token)
+            else:
+                if verb: print("No {} chain variable region contig assembled".format(chain_name))
+            if const_token:
+                if verb: print("However, found partial {} chain constant region contig".format(chain_name))
+                result += ">cell_id={};{}_chain[constant_region_contig];BASIC\n{}\n".format(cellid, chain_name, const_token)
+            else:
+                if verb: print("No {} chain constant region contig assembled".format(chain_name))
 
     result_queue.put({chain_name: result})
 
@@ -142,9 +157,7 @@ def find_anchor(mapped_output):
         anchor = max(mapped_reads, key=mapped_reads.get)
         anchor = anchor.strip('N')
     except (ValueError, TypeError):
-        print('Error: reads did not map to {}'.format(mapped_output.split('.')[-1]))
-        print('Program terminated.')
-        exit(0)
+        anchor = ''
 
     return anchor, all_reads, max_read_length
 
@@ -193,6 +206,11 @@ def parse_args():
     parser.add_argument('-t', action='store', dest='tmpdir',
                         default='./',
                         help='Path to directory for writing intermediate files.')
+
+    parser.add_argument('-a', action='store_true', dest='allow_partial',
+                        default=False,
+                        help='Allow for partial reconstruction i.e. do not '
+                        'terminate if reads do not map to one or both chains')
 
     parser.add_argument('-o', action='store', dest='output_location',
                         default='./',
@@ -353,6 +371,12 @@ def main():
         output_path = "{}/{}.{}".format(results.tmpdir, results.name, chain_type)
         anchors_str[chain_type], anchors_dict[chain_type], max_rl = find_anchor(output_path)
         max_read_length = max(max_read_length, max_rl)
+
+        # exit if no anchor found and the allow_partial argument was not used
+        if not anchors_str[chain_type] and not results.allow_partial:
+            print('Error: reads did not map to {}'.format(chain_type))
+            print('Program terminated.')
+            exit(1)
 
         if results.VERBOSE:
             if chain_type.endswith('v'):
