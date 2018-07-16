@@ -201,7 +201,7 @@ def parse_args():
 
     parser.add_argument('-b', action='store', dest='bowtie',
                         default='./',
-                        help='Absolute path to directory that contains the bowtie2 executable')
+                        help='Absolute path to bowtie2 executable or directory containing it')
 
     parser.add_argument('-t', action='store', dest='tmpdir',
                         default='./',
@@ -321,8 +321,14 @@ def main():
     # Bowtie2 for mapping reads
     if results.VERBOSE: print('Using Bowtie2 to find initial seeds using {} threads:'.format(results.num_threads))
 
-    bowtie_base_cmd = "{}/bowtie2 --very-sensitive --quiet \
-        --threads {} --no-hd".format(results.bowtie, results.num_threads)
+
+    # accept directory containing bowtie2 or the executable itself
+    bowtie_path = results.bowtie
+    if os.path.basename(bowtie_path) != 'bowtie2':
+        bowtie_path = os.path.join(results.bowtie, 'bowtie2')
+
+    bowtie_base_cmd = "{} --very-sensitive --quiet \
+        --threads {} --no-hd".format(bowtie_path, results.num_threads)
 
     # awk extracts read sequence (column 10), name of ref sequence aligned to (3)
     # CIGAR representation of alignment (6), and 1-based offset into the forward

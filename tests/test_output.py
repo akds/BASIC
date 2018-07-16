@@ -16,7 +16,7 @@ def find_bowtie2_dir():
                                           stdout=subprocess.PIPE,
                                           stderr=subprocess.PIPE).communicate()
         if stdout:
-            return os.path.dirname(stdout.strip())
+            return stdout.strip()
         else:
             print('Bowtie2 not found. Please add it to $PATH or export the '
                   'environmental variable "bowtie2" specifying its directory')
