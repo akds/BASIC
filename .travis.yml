@@ -1,15 +1,39 @@
-language: python
-python:
-  - "2.7"
-  - "3.4"
-  - "3.5"
-  - "3.6"
+language: generic
+
+matrix:
+  include:
+    - os: linux
+      language: python
+      env: TRAVIS_PYTHON_VERSION=2.7
+    - os: linux
+      language: python
+      env: TRAVIS_PYTHON_VERSION=3.4
+    - os: linux
+      language: python
+      env: TRAVIS_PYTHON_VERSION=3.5
+    - os: linux
+      language: python
+      env: TRAVIS_PYTHON_VERSION=3.6
+    - os: osx
+      env: TRAVIS_PYTHON_VERSION=2.7
+    - os: osx
+      env: TRAVIS_PYTHON_VERSION=3.4
+    - os: osx
+      env: TRAVIS_PYTHON_VERSION=3.5
+    - os: osx
+      env: TRAVIS_PYTHON_VERSION=3.6
+      
 install:
-  - sudo apt-get update
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-      wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+      sudo apt-get update;
+      osconda=Linux;
     else
-      wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+      osconda=MacOSX;
+    fi
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
+      wget https://repo.continuum.io/miniconda/Miniconda2-latest-$osconda-x86_64.sh -O miniconda.sh;
+    else
+      wget https://repo.continuum.io/miniconda/Miniconda3-latest-$osconda-x86_64.sh -O miniconda.sh;
     fi
   - bash miniconda.sh -b -p $HOME/miniconda
   - export PATH="$HOME/miniconda/bin:$PATH"
@@ -21,6 +45,7 @@ install:
   - conda config --add channels bioconda
   - conda install bowtie2 biopython pytest
   - source activate test-environment
+
 script:
   - export bowtie2=$(dirname $(which bowtie2))
   - pytest -v
