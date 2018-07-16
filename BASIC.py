@@ -173,52 +173,65 @@ def parse_args():
 
     parser.add_argument('-i', action='store', dest='type',
                         default='BCR',
-                        help='BCR or TCR (default: BCR)')
+                        help='Type of receptor. Choices: "BCR" or "TCR" '
+                        '(default: BCR)')
 
-    parser.add_argument('-p', action='store', dest='num_threads',
+    parser.add_argument('-p', action='store', type=int, dest='num_threads',
                         default='2',
-                        help='Launch p > 2 threads that will run on separate processors/cores (default: 2)')
+                        help='Launch p > 2 threads that will run on separate '
+                        'processors/cores (default: 2)')
 
     parser.add_argument('-n', action='store', dest='name',
                         default='result',
-                        help='Name of output file (default: result)')
+                        help='Name of output file. Note: a ".fasta" extension '
+                        'will be added (default: result.fasta)')
 
     parser.add_argument('-SE', action='store', type=str, dest='FASTQ',
                         default='',
-                        help='Single end FASTQ file. (example: se.fastq)')
+                        help='Single end FASTQ file (optionally gzipped). '
+                        '(example: se.fastq)')
 
     parser.add_argument('-PE_1', action='store', type=str, dest='LEFT',
                         default='',
-                        help='Paired end (left) FASTQ file. -PE_2 is required and pairs must match order. (example: pe_1.fastq)')
+                        help='Paired end (left) FASTQ file (optionally gzipped). '
+                        '-PE_2 is required and pairs must match order. '
+                        '(example: pe_1.fastq)')
 
     parser.add_argument('-PE_2', action='store', type=str, dest='RIGHT',
                         default='',
-                        help='Paired end (right) FASTQ files. (example: pe_2.fastq)')
+                        help='Paired end (right) FASTQ file (optionally gzipped). '
+                        '(example: pe_2.fastq)')
 
     parser.add_argument('-g', action='store', dest='genome',
                         default='human',
-                        help='human or mouse (default: human)')
+                        help='Options: "human" or "mouse" '
+                        '(default: human). Note: other species are possible '
+                        'by adding the appropriate Bowtie2 indices and '
+                        'following the existing db/ directory structure')
 
     parser.add_argument('-b', action='store', dest='bowtie',
                         default='./',
-                        help='Absolute path to bowtie2 executable or directory containing it')
+                        help='Absolute path to bowtie2 executable or '
+                        'directory containing it')
 
     parser.add_argument('-t', action='store', dest='tmpdir',
                         default='./',
-                        help='Path to directory for writing intermediate files.')
+                        help='Path to directory for writing intermediate files. '
+                        '(default: current working directory)')
+
+    parser.add_argument('-o', action='store', dest='output_location',
+                        default='./',
+                        help='Output directory (default: current working '
+                        'directory)')
 
     parser.add_argument('-a', action='store_true', dest='allow_partial',
                         default=False,
                         help='Allow for partial reconstruction i.e. do not '
-                        'terminate if reads do not map to one or both chains')
-
-    parser.add_argument('-o', action='store', dest='output_location',
-                        default='./',
-                        help='Output dir (default: none -- current working directory)')
+                        'terminate if one or both chains do not assemble.')
 
     parser.add_argument('-v', action='store_true', dest='VERBOSE',
                         default=False,
-                        help='Turns on verbosity (more details)')
+                        help='Turns on verbosity for more details.')
 
     parser.add_argument('--version', action='version', version='%(prog)s 1.3.1')
 
