@@ -1,4 +1,4 @@
-## BASIC: BCR (and now TCR) assembly from single cells
+## BASIC: BCR and TCR assembly from single cell RNA-seq
 
 [![Build Status](https://travis-ci.org/akds/BASIC.svg?branch=master)](https://travis-ci.org/akds/BASIC)
 
