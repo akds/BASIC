@@ -260,7 +260,7 @@ def main():
         if len(results.FASTQ) == 0:
             print('Sequencing data missing')
             print('Program terminated.')
-            exit(0)
+            exit(1)
         else:
             if results.VERBOSE: print(('List of single end (SE) sequencing inputs: ' + results.FASTQ + ' ...'))
             single = 1
@@ -271,7 +271,7 @@ def main():
     else:
         print('Both data left and right paired end sequencing must be included')
         print('Program terminated.')
-        exit(0)
+        exit(1)
 
     if single == 1:
         f_list = results.FASTQ.split(',')
@@ -280,7 +280,7 @@ def main():
             if v == False:
                 print((s + ' not found'))
                 print('Program terminated.')
-                exit(0)
+                exit(1)
     elif paired == 1:
         f_list = results.LEFT.split(',')
         for s in f_list:
@@ -288,7 +288,7 @@ def main():
             if v == False:
                 print((s + ' not found'))
                 print('Program terminated.')
-                exit(0)
+                exit(1)
 
         f_list = results.RIGHT.split(',')
         for s in f_list:
@@ -296,11 +296,11 @@ def main():
             if v == False:
                 print((s + ' not found'))
                 print('Program terminated.')
-                exit(0)
+                exit(1)
     else:
         print('Sequencing data missing')
         print('Program terminated.')
-        exit(0)
+        exit(1)
 
 
     try:
@@ -309,12 +309,12 @@ def main():
         if not os.path.isdir(output_location):
             print(('Output directory: ' + output_location + ' is not writeable -- check permissions or try different directory'))
             print('Program terminated.')
-            exit(0)
+            exit(1)
 
     if results.type not in ['BCR', 'TCR']:
         print('Currently only BCR or TCR assembly is supported')
         print('Program terminated.')
-        exit(0)
+        exit(1)
     else:
         if results.VERBOSE: print(('Assembling ' + results.type + ' sequences ...'))
 
@@ -322,7 +322,7 @@ def main():
     if not (results.genome in valid_genomes):
         print('Unsupported genome')
         print('Program terminated.')
-        exit(0)
+        exit(1)
     else:
         db_path = '{}/{}/{}'.format(database, results.genome, results.type)
         check_read = os.access('{}/hc'.format(db_path), os.R_OK)
@@ -332,7 +332,7 @@ def main():
             print('Genome index files not found: {}'.format(db_path))
             print('Check database path (-d) and that index files are readable')
             print('Program terminated.')
-            exit(0)
+            exit(1)
 
 
     # Bowtie2 for mapping reads
@@ -383,7 +383,7 @@ def main():
         except:
             print('Error Bowtie2 not installed or not found in path')
             print('Program terminated.')
-            exit(0)
+            exit(1)
 
     # find anchors and collapse reads into dictionary
     anchors_str = {}
