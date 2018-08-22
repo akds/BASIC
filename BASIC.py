@@ -246,8 +246,12 @@ def main():
 
     results = parse_args()
 
-    output_location = "./" + str(re.sub('\W+', '', results.output_location))
-    output_file = str(re.sub(r'\W+', '', results.name))
+    output_location = str(re.sub('[^a-zA-Z0-9_. /-]', '', results.output_location))
+    if output_location != results.output_location:
+        print('Warning: the output directory (-o) contained unexpected '
+              'characters, using the following instead: '
+              '{}'.format(output_location))
+
     database = os.path.dirname(os.path.realpath(sys.argv[0])) + "/db"
 
     if results.VERBOSE: print(('Run ID: ' + results.name ))

@@ -4,7 +4,7 @@ import subprocess
 import pytest
 
 
-def find_bowtie2_dir():
+def find_bowtie2():
     """ Looks for bowtie2 in PATH if specific environmental variable does
         not exist
     """
@@ -16,7 +16,7 @@ def find_bowtie2_dir():
                                           stdout=subprocess.PIPE,
                                           stderr=subprocess.PIPE).communicate()
         if stdout:
-            return stdout.strip()
+            return stdout.decode('ascii').strip()
         else:
             print('Bowtie2 not found. Please add it to $PATH or export the '
                   'environmental variable "bowtie2" specifying its directory')
@@ -36,7 +36,7 @@ def read_fasta(infile):
 
 
 def run_basic(cmd):
-    bowtie2_path = find_bowtie2_dir()
+    bowtie2_path = find_bowtie2()
     cmd += " -b {}".format(bowtie2_path)
 
     subprocess.check_call(cmd.split(' '))
@@ -53,6 +53,8 @@ def test_se_human_bcr():
 
     for chain_id, seq in expected.items():
         assert actual[chain_id] == seq
+
+    os.remove('SE_test.fasta')
 
 
 def test_pe_human_bcr():
@@ -73,27 +75,55 @@ def test_pe_human_bcr():
     for chain_id, seq in sanger.items():
         assert seq in actual[chain_id]
 
+    os.remove('PE_test.fasta')
 
-def test_empty_fail_without_partial_arg():
 
-    subprocess.check_call(["touch", "empty_file.fasta"])
+class TestEmptyFiles(object):
 
-    cmd = ("python BASIC.py -SE empty_file.fasta "
-           "-g human -i BCR -n no_partial")
+    @classmethod
+    def setup_class(cls):
 
-    with pytest.raises(subprocess.CalledProcessError):
+        subprocess.check_call(["touch", "empty_file.fasta"])
+
+    def test_empty_fail_without_partial_arg(self):
+
+        cmd = ("python BASIC.py -SE empty_file.fasta "
+               "-g human -i BCR -n no_partial")
+
+        with pytest.raises(subprocess.CalledProcessError):
+            run_basic(cmd)
+
+        for f in ['no_partial.hv', 'no_partial.hc',
+                  'no_partial.lv', 'no_partial.lc']:
+            os.remove(f)
+
+
+    def test_empty_success_on_partial_arg(self):
+
+        cmd = ("python BASIC.py -SE empty_file.fasta "
+               "-g human -i BCR -n partial_success -a")
+
         run_basic(cmd)
 
+        # empty result file
+        assert os.stat('partial_success.fasta').st_size == 0
 
-def test_empty_success_on_partial_arg():
+        os.remove('partial_success.fasta')
 
-    # an empty fasta as input should pass with the partial argument
-    subprocess.check_call(["touch", "empty_file.fasta"])
+    def test_absolute_path(self, tmpdir):
 
-    cmd = ("python BASIC.py -SE empty_file.fasta "
-           "-g human -i BCR -n partial_success -a")
+        tmp_dir_name = str(tmpdir.mkdir('abs'))
 
-    run_basic(cmd)
+        cmd = ("python BASIC.py -SE empty_file.fasta "
+               "-g human -i BCR -n partial_success -a "
+               "-o {}".format(tmp_dir_name))
 
-    # empty result file
-    assert os.stat('partial_success.fasta').st_size == 0
+        run_basic(cmd)
+
+        assert os.stat(os.path.join(tmp_dir_name,
+                                    'partial_success.fasta')
+                       ).st_size == 0
+
+    def teardown_class(cls):
+
+        os.remove('empty_file.fasta')
