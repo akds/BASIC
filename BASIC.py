@@ -408,13 +408,18 @@ def main():
                 print("anchor: {}".format(revcom(anchors_str[chain_type])))
 
     # stitch ends of each chain together in separate processes, putting results into a queue
+    if results.type == 'BCR':
+        assembly_names = ['heavy', 'light']
+    elif results.type == 'TCR':
+        assembly_names = ['TRA', 'TRB']
+
     q = Queue()
     p1 = Process(target=stitch,
                  args=(anchors_str['hc'], anchors_str['hv'], anchors_dict['hc'], anchors_dict['hv'],
-                       results.VERBOSE, max_read_length, results.name, 'heavy', q))
+                       results.VERBOSE, max_read_length, results.name, assembly_names[0], q))
     p2 = Process(target=stitch,
                  args=(anchors_str['lc'], anchors_str['lv'], anchors_dict['lc'], anchors_dict['lv'],
-                       results.VERBOSE, max_read_length, results.name, 'light', q))
+                       results.VERBOSE, max_read_length, results.name, assembly_names[1], q))
     p1.start()
     p2.start()
 
@@ -427,7 +432,7 @@ def main():
     p1.join()
     p2.join()
 
-    combined_fasta_str = ''.join([fasta_res[x] for x in ['heavy', 'light']])
+    combined_fasta_str = ''.join([fasta_res[x] for x in assembly_names])
 
     outfile = '{}/{}.fasta'.format(output_location, results.name)
     write_fasta_str(combined_fasta_str, outfile)
