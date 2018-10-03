@@ -63,7 +63,7 @@ BASIC.py -b <path_to_Bowtie2> -PE_1 R1.fastq.gz -PE_2 R2.fastq.gz -g human -i BC
 http://ttic.uchicago.edu/~aakhan/BASIC/
 
 ### Version
-1.4.0 (2018/07/16)
+1.4.1 (2018/10/02)
 
 ### Contact
 * Please contact Aly Azeem Khan <aakhan@ttic.edu> for any questions or comments.

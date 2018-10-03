@@ -233,7 +233,7 @@ def parse_args():
                         default=False,
                         help='Turns on verbosity for more details.')
 
-    parser.add_argument('--version', action='version', version='%(prog)s 1.4.0')
+    parser.add_argument('--version', action='version', version='%(prog)s 1.4.1')
 
     return parser.parse_args()
 
