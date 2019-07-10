@@ -2,25 +2,7 @@ from Bio import SeqIO
 import os
 import subprocess
 import pytest
-
-
-def find_bowtie2():
-    """ Looks for bowtie2 in PATH if specific environmental variable does
-        not exist
-    """
-
-    try:
-        return os.environ['bowtie2']
-    except KeyError:
-        stdout, stderr = subprocess.Popen(["which", "bowtie2"],
-                                          stdout=subprocess.PIPE,
-                                          stderr=subprocess.PIPE).communicate()
-        if stdout:
-            return stdout.decode('ascii').strip()
-        else:
-            print('Bowtie2 not found. Please add it to $PATH or export the '
-                  'environmental variable "bowtie2" specifying its directory')
-            exit(1)
+from . import utils
 
 
 def read_fasta(infile):
@@ -36,10 +18,11 @@ def read_fasta(infile):
 
 
 def run_basic(cmd):
-    bowtie2_path = find_bowtie2()
+    bowtie2_path = utils.find_bowtie2()
     cmd += " -b {}".format(bowtie2_path)
 
     subprocess.check_call(cmd.split(' '))
+
 
 def test_se_human_bcr():
 
@@ -96,7 +79,6 @@ class TestEmptyFiles(object):
         for f in ['no_partial.hv', 'no_partial.hc',
                   'no_partial.lv', 'no_partial.lc']:
             os.remove(f)
-
 
     def test_empty_success_on_partial_arg(self):
 
