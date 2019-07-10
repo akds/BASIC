@@ -95,11 +95,6 @@ class TestConfig(object):
         with pytest.raises(EnvironmentError):
             BASIC.config_args(self.args)
 
-    def test_bowtie2_call_error(self):
-        self.args['bowtie'] = os.path.abspath(__file__)
-        with pytest.raises(CalledProcessError):
-            BASIC.config_args(self.args)
-
     def test_bowtie2_passing_directory(self):
         self.args['bowtie'] = os.path.dirname(self.args['bowtie'])
         args_out = BASIC.config_args(self.args)

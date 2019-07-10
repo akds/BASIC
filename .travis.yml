@@ -45,7 +45,8 @@ install:
   - conda config --add channels bioconda
   - conda install bowtie2 biopython pytest
   - source activate test-environment
+  - python --version
 
 script:
-  - export bowtie2=$(dirname $(which bowtie2))
+  - export bowtie2=$(which bowtie2)
   - pytest -v
