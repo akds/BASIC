@@ -3,17 +3,15 @@ language: generic
 matrix:
   include:
     - os: linux
-      language: python
-      env: TRAVIS_PYTHON_VERSION=2.7
+      python: "2.7"
     - os: linux
-      language: python
-      env: TRAVIS_PYTHON_VERSION=3.4
+      python: "3.4"
     - os: linux
-      language: python
-      env: TRAVIS_PYTHON_VERSION=3.5
+      python: "3.5"
     - os: linux
-      language: python
-      env: TRAVIS_PYTHON_VERSION=3.6
+      python: "3.6"
+    - os: linux
+      python: "3.7"
     - os: osx
       env: TRAVIS_PYTHON_VERSION=2.7
     - os: osx
@@ -22,6 +20,7 @@ matrix:
       env: TRAVIS_PYTHON_VERSION=3.6
       
 install:
+  - echo $TRAVIS_PYTHON_VERSION
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
       sudo apt-get update;
       osconda=Linux;
