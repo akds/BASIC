@@ -5,8 +5,6 @@ matrix:
     - os: linux
       env: PY_VERSION=2.7
     - os: linux
-      env: PY_VERSION=3.4
-    - os: linux
       env: PY_VERSION=3.5
     - os: linux
       env: PY_VERSION=3.6
@@ -16,7 +14,7 @@ matrix:
       env: PY_VERSION=3.5
     - os: osx
       env: PY_VERSION=3.6
-      
+
 install:
   - echo $PY_VERSION
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
