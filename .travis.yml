@@ -3,29 +3,29 @@ language: generic
 matrix:
   include:
     - os: linux
-      python: 2.7
+      env: PY_VERSION=2.7
     - os: linux
-      python: 3.4
+      env: PY_VERSION=3.4
     - os: linux
-      python: 3.5
+      env: PY_VERSION=3.5
     - os: linux
-      python: 3.6
+      env: PY_VERSION=3.6
     - os: osx
-      env: TRAVIS_PYTHON_VERSION=2.7
+      env: PY_VERSION=2.7
     - os: osx
-      env: TRAVIS_PYTHON_VERSION=3.5
+      env: PY_VERSION=3.5
     - os: osx
-      env: TRAVIS_PYTHON_VERSION=3.6
+      env: PY_VERSION=3.6
       
 install:
-  - echo $TRAVIS_PYTHON_VERSION
+  - echo $PY_VERSION
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
       sudo apt-get update;
       osconda=Linux;
     else
       osconda=MacOSX;
     fi
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
+  - if [[ "$PY_VERSION" == "2.7" ]]; then
       wget https://repo.continuum.io/miniconda/Miniconda2-latest-$osconda-x86_64.sh -O miniconda.sh;
     else
       wget https://repo.continuum.io/miniconda/Miniconda3-latest-$osconda-x86_64.sh -O miniconda.sh;
@@ -36,7 +36,7 @@ install:
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
   - conda info -a
-  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION
+  - conda create -q -n test-environment python=$PY_VERSION
   - conda config --add channels bioconda
   - source activate test-environment
   - conda install bowtie2 biopython pytest
