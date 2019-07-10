@@ -17,8 +17,6 @@ matrix:
     - os: osx
       env: TRAVIS_PYTHON_VERSION=2.7
     - os: osx
-      env: TRAVIS_PYTHON_VERSION=3.4
-    - os: osx
       env: TRAVIS_PYTHON_VERSION=3.5
     - os: osx
       env: TRAVIS_PYTHON_VERSION=3.6
