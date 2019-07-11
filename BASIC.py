@@ -248,6 +248,12 @@ def parse_args():
                         help='Path to database directory. Defaults to '
                         '<path of BASIC.py>/db')
 
+    parser.add_argument('--subsample', action='store', type=int,
+                        dest='subsample',
+                        default=None,
+                        help='Use the first <int> number of reads of the '
+                        'input. Default: no limit')
+
     parser.add_argument('--version', action='version',
                         version='%(prog)s 1.4.1')
 
@@ -414,6 +420,9 @@ def run_bowtie2(args):
         seq_options = "-U {}".format(args['FASTQ'])
     elif args['read_type'] == 'paired':
         seq_options = "-U {},{}".format(args['LEFT'], args['RIGHT'])
+
+    if args['subsample']:
+        seq_options += " --qupto {}".format(args['subsample'])
 
     # chain types- heavy variable (hv), heavy constant (hc); likewise for light
     for chain_type in ['hv', 'hc', 'lv', 'lc']:

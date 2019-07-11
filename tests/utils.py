@@ -1,5 +1,8 @@
 import subprocess
 import os
+import tempfile
+import shutil
+import contextlib
 
 
 def find_bowtie2():
@@ -20,3 +23,12 @@ def find_bowtie2():
                   ' environmental variable "bowtie2" specifying its '
                   'directory.')
             exit(1)
+
+
+@contextlib.contextmanager
+def make_temp_dir():
+    temp_dir = tempfile.mkdtemp()
+    try:
+        yield temp_dir
+    finally:
+        shutil.rmtree(temp_dir)

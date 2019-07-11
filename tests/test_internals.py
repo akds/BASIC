@@ -1,7 +1,6 @@
 import BASIC
 import pytest
 import os
-from subprocess import CalledProcessError
 from . import utils
 
 
@@ -41,6 +40,7 @@ class TestConfig(object):
             'allow_partial': False,
             'VERBOSE': False,
             'database_path': '',
+            'subsample': None,
         }
 
     def test_default_args_with_ex_fastqs(self):
@@ -99,3 +99,25 @@ class TestConfig(object):
         self.args['bowtie'] = os.path.dirname(self.args['bowtie'])
         args_out = BASIC.config_args(self.args)
         assert args_out['read_type'] == 'paired'
+
+    def test_subsample(self, tmpdir):
+
+        with utils.make_temp_dir() as temp_dir:
+
+            reads_subsampled = 100
+
+            args = BASIC.config_args(self.args)
+            args['subsample'] = reads_subsampled
+            args['tmpdir'] = temp_dir
+
+            BASIC.run_bowtie2(args)
+
+            for chain_type in ['hv', 'hc', 'lv', 'lc']:
+                line_cnt = 0
+                with open('{}/{}.{}'.format(temp_dir,
+                                            args['name'],
+                                            chain_type)) as f:
+                    for line in f:
+                        line_cnt += 1
+
+                assert line_cnt == reads_subsampled
