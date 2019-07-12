@@ -255,7 +255,7 @@ def parse_args():
                         'input. Default: no limit')
 
     parser.add_argument('--version', action='version',
-                        version='%(prog)s 1.4.1')
+                        version='%(prog)s 1.5.0')
 
     return vars(parser.parse_args())
 
