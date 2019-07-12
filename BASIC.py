@@ -382,8 +382,9 @@ def config_args(arg_dict):
     if os.path.isfile(arg_dict['bowtie']) and os.access(arg_dict['bowtie'],
                                                         os.X_OK):
         try:
-            subprocess.check_call("{} --version".format(arg_dict['bowtie']),
-                                  shell=True)
+            _ = subprocess.check_output("{} "
+                                        "--version".format(arg_dict['bowtie']),
+                                        shell=True)
         except subprocess.CalledProcessError:
             print("Error: Bowtie2 was not able to be called correctly. "
                   "Please check the '-b' flag.")
