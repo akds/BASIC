@@ -3,8 +3,7 @@
 BASIC can search public nucleotide records, download selected reference
 sequences, and build a custom reference directory. It can also use another
 species' references as experimental seeds for assembling the target animal's
-reads. These are different operations: neither creates a validated germline
-catalog automatically.
+reads. Neither process automatically creates a validated germline catalog.
 
 ## Find candidate sequences by organism
 
@@ -22,7 +21,7 @@ metadata. Both interfaces are documented by
 [NCBI's E-utilities reference](https://www.ncbi.nlm.nih.gov/books/NBK25499/).
 The result includes accession/version when available, title, nucleotide
 length, taxonomic ID, record URL, the query, total match count, and response
-checksums. `--limit` is between 1 and 100. Searches are bounded by a default
+checksums. `--limit` is between 1 and 100. Searches have a default
 30-second timeout and a 5 MB response limit; `--timeout` and `--max-bytes`
 adjust these limits.
 
@@ -31,8 +30,9 @@ immunoglobulin-superfamily gene unrelated to an antibody, a whole genomic
 region, an expressed rearrangement, or a partial record. BASIC does not assign
 V/C regions, receptor loci, or germline status from titles. Inspect the linked
 records and select appropriate regional nucleotide sequences before adding
-them to a build manifest. An empty search does not establish biological
-absence. Search results and annotations can change as NCBI is updated.
+them to a build manifest. An empty search result does not mean the organism
+lacks these sequences. Search results and annotations can change as NCBI is
+updated.
 
 ## Build from files, URLs, or selected accessions
 
@@ -80,7 +80,7 @@ basic-assemble -SE cell.fastq.gz -g rabbit -i BCR \
   -d ./references -n rabbit_cell
 ```
 
-To avoid downloading or uploading files manually, replace a source's `path`
+To retrieve a source automatically, replace its `path`
 with either an HTTPS `url` or a selected NCBI `accession`:
 
 ```json
@@ -171,7 +171,8 @@ All source retrieval and validation happens in a sibling staging directory.
 The builder then runs Bowtie2-build separately for all four groups and checks
 that each has six readable, nonempty `.bt2` or `.bt2l` shards. The default
 build timeout is 600 seconds per group; change it with `--build-timeout`.
-Timed-out or interrupted builds terminate their process groups on POSIX.
+After a timeout or interruption on POSIX, BASIC tries to stop the process
+group, then the direct child if group termination fails.
 
 An existing reference directory is preserved unless `--overwrite` is given.
 Source errors, checksum failures, builder failures, missing shards, and
@@ -218,6 +219,7 @@ independent sequence or annotation evidence appropriate to the organism.
 
 Automatic taxon-wide germline discovery is not supported: public records may
 lack reliable locus/segment annotation, and expressed rearrangements do not
-by themselves define a species' germline repertoire. The supported workflow
-is organism-name candidate search, explicit selection and declarations,
-automatic retrieval/index building, and optional related-reference seeding.
+by themselves define a species' germline repertoire. To build a library, search
+by organism name, select candidate sequences, and declare their loci and
+orientations. BASIC can then retrieve the sequences and build indexes.
+Related-species seeding is optional.

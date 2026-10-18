@@ -30,12 +30,12 @@ basic-assemble --version
 The command downloads the [published GitHub wheel](https://github.com/akds/BASIC/releases/tag/v2.0.1);
 you can also pass the path to a previously downloaded wheel. If Bowtie2 is
 outside `PATH`, supply `-b /path/to/bowtie2` when assembling.
-Reference construction similarly needs `bowtie2-build`.
+Building references also requires `bowtie2-build`.
 
 ## After the public registries publish 2.0.1
 
-These are the intended registry commands. PyPI publication is deferred, and
-the Bioconda update requires its own review and build. Use the GitHub wheel or
+Use these commands after registry publication. PyPI publication is deferred,
+and the Bioconda update requires its own review and build. Use the GitHub wheel or
 source until your chosen registry lists 2.0.1; do not assume these commands
 provide it before then.
 
@@ -66,7 +66,7 @@ validated target; use WSL2 with the Linux route. A platform-neutral Python wheel
 does not guarantee external aligners are available on every architecture.
 Conda dependency availability also varies by platform.
 
-After upgrading, verify the executable actually being used:
+After upgrading, check which version is being used:
 
 ```bash
 basic-assemble --version

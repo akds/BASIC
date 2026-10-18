@@ -15,8 +15,8 @@ Preparing these files does not publish any registry package.
 
 ## Preserve GitHub history
 
-The starting folder is a source snapshot without `.git`. Apply the prepared
-source to a branch in a real clone, preserving existing history:
+If your starting folder is a source snapshot without `.git`, apply the updated
+source to a branch in a clone of the repository, preserving existing history:
 
 ```bash
 git clone https://github.com/akds/BASIC.git BASIC-release
@@ -55,7 +55,7 @@ python packaging/release_assets.py --dist dist --output release-assets
 ```
 
 Use a clean `dist/` when building; keep only the intended version's wheel and
-source archive. Install the wheel in another fresh environment outside the
+source archive. Install the wheel in a fresh environment outside the
 checkout. Check all four commands (`basic-assemble`, `BASIC.py`,
 `basic-references`, `basic-skill`), all four reference index sets, and a real
 assembly. See [validation limits](VALIDATION.md) and the [review record](REVIEW.md).
@@ -127,6 +127,6 @@ release needs changed code or artifacts, choose a new version and matching tag;
 do not mask discrepancies with `skip-existing`. TestPyPI has the same constraint,
 so repeated pre-release experiments should use distinct pre-release versions.
 
-The prepared workflow does not open a Bioconda pull request or publish Conda
+The workflow does not open a Bioconda pull request or publish Conda
 packages automatically. That separate build supplies Bowtie2 as an installation
 dependency and updates the Anaconda.org channel listing.

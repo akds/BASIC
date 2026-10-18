@@ -54,8 +54,8 @@ basic-assemble --batch cells.tsv -o results -p 4 --continue-on-error
 
 Sample IDs must be unique even when case is ignored. Optional `genome` and
 `receptor` columns override `-g` and `-i`; omit those columns to use command
-defaults. Lane lists may appear inside input cells. Each row must specify
-either single-end or paired input, and batch mode cannot be combined with
+defaults. Input fields can contain comma-separated lane lists. Each row must
+specify either single-end or paired input, and batch mode cannot be combined with
 command-line `-SE`/`-PE_1`/`-PE_2` inputs.
 
 Cells run sequentially; `-p` controls each Bowtie2 alignment's threads.
@@ -115,7 +115,7 @@ junction/CDR3 annotations, and predicted productivity. Unavailable fields
 stay empty; an empty `productive` field does not mean false. Junction includes
 the conserved flanking codons, whereas CDR3 excludes them. Omitting or
 mismatching the J auxiliary file can leave frame/CDR3 annotation unavailable
-or incorrect. Annotation errors fail the run rather than publish a partial
+or incorrect. If annotation fails, the run stops without publishing a partial
 annotation table.
 
 Annotation settings are shared across batch rows. Use separate invocations
@@ -137,7 +137,7 @@ basic-assemble -SE cell.fastq.gz -g human -i BCR \
   -n cell_trimmed -o results --trim-quality 20
 ```
 
-To explore quality and mate evidence with bounded alternative paths:
+To try quality and mate evidence while limiting alternative paths:
 
 ```bash
 basic-assemble -PE_1 cell_R1.fastq.gz -PE_2 cell_R2.fastq.gz \
