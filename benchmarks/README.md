@@ -1,5 +1,36 @@
 # Assembly evaluation
 
+## Try the included example
+
+After installing BASIC and Bowtie2, run this from the repository root. It
+assembles the bundled human B-cell reads, measures the command's elapsed time,
+and compares the result with the supplied BASIC assembly:
+
+```bash
+python benchmarks/benchmark.py \
+  --expected-fasta examples/cell_A1/result.fasta \
+  --actual-fasta results/cell_A1-timed/result.fasta \
+  --label included-human-bcr-regression \
+  --output results/cell_A1-timed/comparison.json \
+  --run basic-assemble -SE examples/cell_A1/ERR1421621_1M_reads.fastq.gz \
+    -g human -i BCR -n result -o results/cell_A1-timed -p 2
+```
+
+Use a fresh output directory for each run. Keep `-n result` so the generated
+FASTA identifiers match the supplied file. In `comparison.json`, expect
+`sequences.exact_match_count` to be `2` and exact recall and precision to be
+`1.0`. `execution.wall_seconds` records this run's elapsed time, including
+input preparation, alignment, assembly, and report writing. It varies with
+the machine and workload.
+
+This is a regression check against an existing assembly. To measure biological
+accuracy, use independently validated receptor sequences as described below.
+For comparisons between tools or settings, use the same reads and reference
+versions, repeat timing runs under comparable conditions, and record the
+hardware and thread counts. The run manifest records BASIC's configuration.
+
+## Compare your own assemblies
+
 `benchmark.py` compares assemblies with independently curated truth and emits
 JSON. It uses only Python's standard library. FASTA identifiers (the first token
 after `>`) must match between files; AIRR rows use the same `sequence_id`.

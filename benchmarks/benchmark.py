@@ -11,10 +11,13 @@ import json
 import math
 import os
 from pathlib import Path
-import signal
 import subprocess
 import sys
 import time
+
+# Keep the documented source-checkout CLI usable from any working directory.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from basic_assembler.processes import cleanup_process
 
 
 def read_fasta(path):
@@ -131,14 +134,7 @@ def _execute(command, timeout):
     try:
         return process.wait(timeout=timeout)
     except BaseException:
-        try:
-            if os.name == "posix":
-                os.killpg(process.pid, signal.SIGKILL)
-            else:
-                process.kill()
-        except ProcessLookupError:
-            pass
-        process.wait()
+        cleanup_process(process)
         raise
 
 

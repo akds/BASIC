@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.0.1 — 2026/10/18
+
+- Preserve the original alignment/timeout error when process-group termination is denied.
+- Fall back to terminating the direct child and bound failure-path process cleanup.
+- Share cleanup across alignment, annotation, reference building, and benchmark subprocesses.
+- Add deterministic permission-denial and process-exit regression tests.
+- Include Bioconda's required downstream compatibility pin in generated recipes.
+- Rewrite the introduction and first-run guide, with a runnable example and benchmark walkthrough.
+
 ## 2.0 — 2026/10/18
 
 This release modernizes BASIC 1.5.0. The indexed default assembler has

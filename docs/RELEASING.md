@@ -1,8 +1,8 @@
-# Release BASIC 2.0.0
+# Release BASIC 2.0.1
 
 The canonical repository is [akds/BASIC](https://github.com/akds/BASIC).
-The README presents **2.0 (2026/10/18)**; Python and Conda use **2.0.0**, and the
-Git tag is **v2.0.0**. The software uses the standard [MIT license](../LICENSE).
+The README presents **2.0 (2026/10/18)**; Python and Conda use **2.0.1**, and the
+Git tag is **v2.0.1**. The software uses the standard [MIT license](../LICENSE).
 Reference data and external tools retain their terms.
 
 PyPI publication can be deferred independently of the GitHub release.
@@ -93,7 +93,7 @@ than a stored API token, as described by the
 After configuring and testing the publisher, set the repository Actions
 variable `PYPI_PUBLISH_ENABLED` to `true` if future published releases should
 upload automatically. To publish this existing release later, manually run
-the workflow with destination `pypi` and ref `v2.0.0`; that explicit run does
+the workflow with destination `pypi` and ref `v2.0.1`; that explicit run does
 not require the variable. Until then, leave the variable unset or `false`.
 
 ## Publish the checked version
@@ -105,16 +105,16 @@ not require the variable. Until then, leave the variable unset or `false`.
    environment using only the TestPyPI index:
 
    ```bash
-   python -m pip install --index-url https://test.pypi.org/simple/ basic-immune-assembler==2.0.0
+   python -m pip install --index-url https://test.pypi.org/simple/ basic-immune-assembler==2.0.1
    basic-assemble --version
    ```
 
-3. Tag the exact reviewed commit `v2.0.0`, push the tag, and publish its GitHub
+3. Tag the exact reviewed commit `v2.0.1`, push the tag, and publish its GitHub
    release. The `release: published` event runs checks and uploads GitHub assets.
    It also publishes to PyPI when `PYPI_PUBLISH_ENABLED` is `true`.
    A manual **pypi** run is also supported, but it must select the matching
    version tag. Production rejects a branch or mismatched tag.
-4. Verify `python -m pip install basic-immune-assembler==2.0.0` in a new
+4. Verify `python -m pip install basic-immune-assembler==2.0.1` in a new
    environment and confirm the PyPI file checksums. The workflow also attaches
    the exact tested wheel, source archive, standalone skill ZIP, and checksum
    list to the GitHub release. It refuses to overwrite existing assets.
