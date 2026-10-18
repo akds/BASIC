@@ -127,7 +127,7 @@ jobs:
           repository-url: https://test.pypi.org/legacy/
 
   pypi:
-    if: github.event_name == 'release' || inputs.destination == 'pypi'
+    if: (github.event_name == 'release' && vars.PYPI_PUBLISH_ENABLED == 'true') || (github.event_name == 'workflow_dispatch' && inputs.destination == 'pypi')
     needs: build
     runs-on: ubuntu-latest
     environment:
