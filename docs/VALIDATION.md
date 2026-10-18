@@ -1,6 +1,6 @@
 # BASIC 2.0 validation — 2026/10/18
 
-This release was reviewed and exercised on macOS arm64, Python 3.12.14, pytest
+This release was reviewed and tested on macOS arm64, Python 3.12.14, pytest
 9.1.1, and Bowtie2 2.5.5. The results below separate software checks from
 biological evidence. Passing these checks does not guarantee that every input
 is handled correctly or establish a general improvement in receptor accuracy.
