@@ -7,7 +7,7 @@
 - Share cleanup across alignment, annotation, reference building, and benchmark subprocesses.
 - Add deterministic permission-denial and process-exit regression tests.
 - Include Bioconda's required downstream compatibility pin in generated recipes.
-- Rewrite the introduction and first-run guide, with a runnable example and benchmark walkthrough reviewed by fresh Codex, Claude, and Gemini reviewers.
+- Rewrite the introduction and first-run guide, with a runnable example and benchmark walkthrough.
 
 ## 2.0 — 2026/10/18
 

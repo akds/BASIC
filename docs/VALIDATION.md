@@ -1,6 +1,6 @@
 # BASIC 2.0 validation — 2026/10/18
 
-This release was reviewed and tested on macOS arm64, Python 3.12.14, pytest
+This release was tested on macOS arm64, Python 3.12.14, pytest
 9.1.1, and Bowtie2 2.5.5. The results below separate software checks from
 biological evidence. Passing these checks does not guarantee that every input
 is handled correctly or establish a general improvement in receptor accuracy.
@@ -26,11 +26,23 @@ The test suite covers:
   truncated responses, checksums, NCBI search parsing, index-build failures,
   and preservation of existing references.
 
-The complete suite is rerun after review fixes. Tests of subprocess error
-paths use executable fixtures; those checks are distinct from the real
-Bowtie2 tests described below. Coverage includes statements and branches;
-it is a diagnostic, not proof that all possible behaviors have been tested.
-The final test totals and coverage are recorded in [the review record](REVIEW.md).
+Version 2.0.1 passed all **319 tests** with real Bowtie2 2.5.5, plus nine
+Bioconda recipe-generator tests. Statement coverage was **95.08%**, branch
+coverage **91.20%**, and combined coverage **93.92%**. Module results and source
+hashes are in [validation.json](../benchmarks/results/validation.json);
+[2.0.0 results](../benchmarks/results/validation-2.0.0.json) are also available.
+
+Tests of subprocess error paths use executable fixtures; those checks are
+distinct from the real Bowtie2 tests described below. Coverage is measured in
+the pytest process, so externally tested entrypoints may not receive coverage
+credit. It is a diagnostic, not proof that all possible behaviors have been
+tested.
+
+A fresh wheel installation passed all four command checks, found all sixteen
+reference index prefixes, and exported both copies of the skill. Its
+single-end example matched the supplied FASTA byte for byte. The installed
+package also passed the Bioconda smoke harness; this is separate from building
+and testing the Conda package itself.
 
 Reproduce the suite from the checkout:
 
@@ -91,7 +103,7 @@ a major remaining cost. Equivalent compiled character-range validation now
 replaces a Python-level check of every quality character, with boundary tests
 for accepted and rejected qualities. The [profile summary](../benchmarks/results/profile-summary.json)
 records the pre-optimization profile and a separate microbenchmark. No peak
-memory number is reported because the local resource measurement was blocked.
+memory number is reported because the measurement was unavailable.
 Original/new example runtimes were collected under different concurrency
 conditions and should not be used as a controlled speed comparison.
 
@@ -110,6 +122,10 @@ conditions and should not be used as a controlled speed comparison.
   preserved, not treated as a wildcard; this is not an indel-tolerant assembler.
 - `complete` means that seeds are connected. Receptor productivity, clonotype,
   alleles, and true dual-chain expression need additional evidence.
+- Process cleanup attempts to stop the process group, then the direct child
+  if needed. The operating system can deny termination; an inaccessible
+  descendant holding the streaming aligner's stdout open can cause the timeout
+  to be exceeded.
 - Output publication supports recovery from ordinary write failures. Multiple
   file renames do not form a crash-atomic filesystem transaction.
 

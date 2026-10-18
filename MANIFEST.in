@@ -12,3 +12,4 @@ recursive-include skills *.md
 recursive-include packaging *.py *.in *.md
 prune .venv
 global-exclude __pycache__ *.py[cod] .DS_Store
+prune .local-maintenance

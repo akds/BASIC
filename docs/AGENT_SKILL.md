@@ -123,8 +123,4 @@ On an ordinary write failure, the installer attempts to remove files it
 created during that attempt; existing files are preserved. This is not a
 crash-atomic update mechanism, and newly created empty directories can remain.
 
-The skill was reviewed with Codex, Gemini, and Claude;
-see [the review record](SKILL_REVIEW.md) for results and limitations.
-These reviews do not establish that every provider/version has
-executed the workflow successfully or that assembled sequences are biologically
-correct. See [the usage guide](USAGE.md) for command details and interpretation.
+See [the usage guide](USAGE.md) for command details and interpretation.

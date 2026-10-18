@@ -25,12 +25,6 @@
     "platform": "macOS-26.5.2-arm64-arm-64bit",
     "python": "3.12.14"
   },
-  "independent_review": {
-    "high_level_risk_review": "completed",
-    "last_component_timeout_seconds": 300,
-    "model": "Gemini 4 Argon (High)",
-    "source_review": "incomplete: full-source and component CLI requests timed out with empty responses"
-  },
   "installed_wheel_checks": {
     "bioconda_smoke": "passed against wheel with real Bowtie2; not a conda build",
     "bundled_index_sets": 4,
@@ -232,11 +226,6 @@
     "packaging/bioconda/prepare.py": "70eb3d8cb318024e789482c1ab745880be41c24fe34ce363adf9aaddef16d791",
     "packaging/bioconda/run_test.py": "33d58201e95667aad2460a50c1f26404df95ebb8b43271cdd94725c306a32eb9",
     "packaging/release_assets.py": "a3a03ed050c939e6d75f9fcf982151ac942c9cc584fc6670ff209fe3d58370a6"
-  },
-  "skill_review": {
-    "claude-opus-5-5-high": "completed; actionable findings incorporated",
-    "gemini-4-argon-high": "completed; actionable findings incorporated",
-    "scope": "skill instructions; not full source or native provider execution"
   },
   "source_sha256": {
     "BASIC.py": "3093cc9f0a77f0eb7d6836bf2568a3876ab4edd60918e6565b2d50a861b16c2a",

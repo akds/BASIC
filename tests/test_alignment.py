@@ -162,7 +162,7 @@ class AlignmentTests(unittest.TestCase):
 
     def assert_child_stopped(self, marker):
         # The child writes this marker after a delay unless it was stopped.
-        # This needs no global process inspection (e.g. sandbox-blocked ps).
+        # This needs no global process inspection.
         time.sleep(1.1)
         self.assertFalse(marker.exists(), "Aligner descendant survived cleanup")
 

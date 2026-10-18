@@ -3,7 +3,7 @@
   "elapsed_seconds": 27.251212454999965,
   "total_calls": 175947142,
   "peak_rss": null,
-  "peak_rss_note": "/usr/bin/time -l could not access sysctl kern.clockrate under sandbox; it exited1 after successful assembly. No peak RSS value reported.",
+  "peak_rss_note": "Peak RSS measurement was unavailable; no value is reported.",
   "fasta_sha256": "487a1357c3c8840efbe730aad76421c2219f7a27ebfa3efbc9a267707a21afe3",
   "functions": [
     {

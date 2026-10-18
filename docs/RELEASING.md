@@ -58,7 +58,7 @@ Use a clean `dist/` when building; keep only the intended version's wheel and
 source archive. Install the wheel in a fresh environment outside the
 checkout. Check all four commands (`basic-assemble`, `BASIC.py`,
 `basic-references`, `basic-skill`), all four reference index sets, and a real
-assembly. See [validation limits](VALIDATION.md) and the [review record](REVIEW.md).
+assembly. See [validation results and limits](VALIDATION.md).
 Native IgBLAST biological validation remains pending.
 
 Stage the reviewed source, documentation, tests, skills, packaging helpers,

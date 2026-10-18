@@ -174,8 +174,7 @@ catalogue or justify definitive gene calls across species.
   biological accuracy in general.
 
 Patch 2.0.1 fixes error handling when the operating system denies process-group
-cleanup. See the [changelog and migration notes](CHANGELOG.md),
-[review record](docs/REVIEW.md), and [README editorial reviews](docs/README_REVIEW.md).
+cleanup. See the [changelog and migration notes](CHANGELOG.md).
 For development, see [testing and release instructions](docs/RELEASING.md).
 
 ## Citation and license
