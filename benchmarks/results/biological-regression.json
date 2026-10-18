@@ -1,0 +1,40 @@
+{
+  "conditions": "Exploratory single runs; original cases ran concurrently, revised cases sequentially. Wall times are not a controlled speedup benchmark.",
+  "cases": {
+    "single": {
+      "original_wall_seconds": 30.604052083042916,
+      "revised_manifest_seconds": 12.74187912500929,
+      "original_lengths": {
+        "heavy_chain": 878,
+        "light_chain": 829
+      },
+      "revised_lengths": {
+        "heavy_chain": 878,
+        "light_chain": 829
+      },
+      "exact_original_match": {
+        "heavy_chain": true,
+        "light_chain": true
+      }
+    },
+    "paired": {
+      "original_wall_seconds": 9.816621917008888,
+      "revised_manifest_seconds": 5.517250167031307,
+      "original_lengths": {
+        "heavy_chain": 1673,
+        "light_chain": 1640
+      },
+      "revised_lengths": {
+        "heavy_chain": 1673,
+        "light_chain": 1631
+      },
+      "exact_original_match": {
+        "heavy_chain": true,
+        "light_chain": false
+      }
+    }
+  },
+  "paired_caution": "Revised light chain diverges from original after a shared first 1584 bases; both contain the available Sanger truth. Extra tail accuracy is not established.",
+  "bowtie2_version": "2.5.5",
+  "python_version": "3.12.14"
+}

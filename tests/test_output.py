@@ -1,111 +1,86 @@
-from Bio import SeqIO
-import os
+"""Real-aligner regressions against the two supplied human BCR examples."""
+import json
 import subprocess
+import sys
 import pytest
-from . import utils
+
+pytestmark = pytest.mark.integration
 
 
-def read_fasta(infile):
-    """ Returns fasta as a dict of {chain: sequence}
-    """
-    recs = {}
-    for record in SeqIO.parse(infile, 'fasta'):
-        # extract chain from header e.g. >cell_id=result;heavy_chain;BASIC
-        chain = record.id.split(';')[1]
-        seq = str(record.seq)
-        recs[chain] = seq
-    return recs
+def read_chains(path):
+    """Read all records, rejecting duplicate chain identifiers explicitly."""
+    records, header, parts = {}, None, []
+
+    def save():
+        if header is not None:
+            fields = header.split(";")
+            assert len(fields) >= 2, f"Missing chain identifier: {header}"
+            chain = fields[1]
+            assert chain not in records, f"Duplicate chain record: {chain}"
+            records[chain] = "".join(parts).upper()
+
+    with open(path) as handle:
+        for line in handle:
+            line = line.strip()
+            if not line:
+                continue
+            if line.startswith(">"):
+                save()
+                header, parts = line[1:], []
+            else:
+                assert header is not None, "Sequence precedes its header"
+                parts.append(line)
+    save()
+    return records
 
 
-def run_basic(cmd):
-    bowtie2_path = utils.find_bowtie2()
-    cmd += " -b {}".format(bowtie2_path)
-
-    subprocess.check_call(cmd.split(' '))
-
-
-def test_se_human_bcr():
-
-    cmd = ("python BASIC.py -SE examples/cell_A1/ERR1421621_1M_reads.fastq.gz "
-           "-g human -i BCR -n SE_test")
-
-    run_basic(cmd)
-
-    expected = read_fasta('examples/cell_A1/result.fasta')
-    actual = read_fasta('SE_test.fasta')
-
-    for chain_id, seq in expected.items():
-        assert actual[chain_id] == seq
-
-    os.remove('SE_test.fasta')
+def run_basic(repository_root, real_bowtie2, tmp_path, arguments):
+    command = [sys.executable, "-m", "basic_assembler", "-b", real_bowtie2,
+               "-d", str(repository_root / "db"), "-t", str(tmp_path),
+               "-o", str(tmp_path / "out"), "-n", "result", "-p", "2", *arguments]
+    return subprocess.run(command, cwd=repository_root, capture_output=True,
+                          text=True, timeout=1200)
 
 
-def test_pe_human_bcr():
-
-    # run BASIC
-    cmd = ("python BASIC.py "
-           "-PE_1 examples/H8_AW1/R1_100K_reads.fastq.gz "
-           "-PE_2 examples/H8_AW1/R2_100K_reads.fastq.gz "
-           "-g human -i BCR -n PE_test")
-
-    run_basic(cmd)
-
-    sanger = read_fasta('examples/H8_AW1/sanger.fasta')
-    actual = read_fasta('PE_test.fasta')
-
-    # check assembly is inclusive of Sanger result (assembly will contain
-    # additional sequence e.g. V leader)
-    for chain_id, seq in sanger.items():
-        assert seq in actual[chain_id]
-
-    os.remove('PE_test.fasta')
+def test_se_human_bcr(repository_root, real_bowtie2, tmp_path):
+    example = repository_root / "examples/cell_A1"
+    result = run_basic(repository_root, real_bowtie2, tmp_path,
+                       ["-SE", str(example / "ERR1421621_1M_reads.fastq.gz"), "-g", "human", "-i", "BCR"])
+    assert result.returncode == 0, result.stdout + result.stderr
+    actual = read_chains(tmp_path / "out/result.fasta")
+    expected = read_chains(example / "result.fasta")
+    assert set(actual) == set(expected) == {"heavy_chain", "light_chain"}
+    assert actual == expected
 
 
-class TestEmptyFiles(object):
+def test_pe_human_bcr(repository_root, real_bowtie2, tmp_path):
+    example = repository_root / "examples/H8_AW1"
+    result = run_basic(repository_root, real_bowtie2, tmp_path,
+                       ["-PE_1", str(example / "R1_100K_reads.fastq.gz"),
+                        "-PE_2", str(example / "R2_100K_reads.fastq.gz"), "-g", "human", "-i", "BCR"])
+    assert result.returncode == 0, result.stdout + result.stderr
+    actual = read_chains(tmp_path / "out/result.fasta")
+    sanger = read_chains(example / "sanger.fasta")
+    assert set(actual) == set(sanger) == {"heavy_chain", "light_chain"}
+    for chain, sequence in sanger.items():
+        assert sequence in actual[chain]
 
-    @classmethod
-    def setup_class(cls):
 
-        subprocess.check_call(["touch", "empty_file.fasta"])
-
-    def test_empty_fail_without_partial_arg(self):
-
-        cmd = ("python BASIC.py -SE empty_file.fasta "
-               "-g human -i BCR -n no_partial")
-
-        with pytest.raises(subprocess.CalledProcessError):
-            run_basic(cmd)
-
-        for f in ['no_partial.hv', 'no_partial.hc',
-                  'no_partial.lv', 'no_partial.lc']:
-            os.remove(f)
-
-    def test_empty_success_on_partial_arg(self):
-
-        cmd = ("python BASIC.py -SE empty_file.fasta "
-               "-g human -i BCR -n partial_success -a")
-
-        run_basic(cmd)
-
-        # empty result file
-        assert os.stat('partial_success.fasta').st_size == 0
-
-        os.remove('partial_success.fasta')
-
-    def test_absolute_path(self, tmpdir):
-
-        tmp_dir_name = str(tmpdir.mkdir('abs'))
-
-        cmd = ("python BASIC.py -SE empty_file.fasta "
-               "-g human -i BCR -n partial_success -a "
-               "-o {}".format(tmp_dir_name))
-
-        run_basic(cmd)
-
-        assert os.stat(os.path.join(tmp_dir_name,
-                                    'partial_success.fasta')
-                       ).st_size == 0
-
-    def teardown_class(cls):
-
-        os.remove('empty_file.fasta')
+@pytest.mark.parametrize("allow_partial", [False, True])
+def test_empty_fastq_has_explicit_status(repository_root, real_bowtie2, tmp_path, allow_partial):
+    empty = tmp_path / "empty.fastq"
+    empty.write_text("")
+    result = run_basic(repository_root, real_bowtie2, tmp_path,
+                       ["-SE", str(empty), *(["-a"] if allow_partial else [])])
+    if allow_partial:
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert (tmp_path / "out/result.fasta").read_text() == ""
+        report = json.loads((tmp_path / "out/result.run.json").read_text())
+        assert report["status"] == "unsupported"
+        assert report["read_statistics"]["consumed_reads"] == 0
+    else:
+        assert result.returncode != 0
+        assert not (tmp_path / "out/result.fasta").exists()
+        report = json.loads((tmp_path / "out/result.failed.json").read_text())
+        assert report["status"] == "failed"
+        assert report["error_type"] == "AssemblyIncomplete"

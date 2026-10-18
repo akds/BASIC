@@ -1,0 +1,14 @@
+include README.md CHANGELOG.md LICENSE LICENSE-NOTICE.md
+include requirements-test.lock environment.yml
+include requirements-release.lock
+include .gitignore
+recursive-include .github *.yml
+recursive-include db *
+recursive-include examples *.fasta *.gz
+recursive-include tests *.py
+recursive-include benchmarks *.py *.md *.json
+recursive-include docs *.md
+recursive-include skills *.md
+recursive-include packaging *.py *.in *.md
+prune .venv
+global-exclude __pycache__ *.py[cod] .DS_Store

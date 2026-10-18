@@ -1,123 +1,77 @@
-import BASIC
+"""CLI configuration checks independent of a real aligner installation."""
 import pytest
-import os
-from . import utils
+from basic_assembler.cli import config_args, parse_args
 
 
-def test_complement():
-    assert BASIC.complement('A') == 'T'
-    assert BASIC.complement('T') == 'A'
-    assert BASIC.complement('G') == 'C'
-    assert BASIC.complement('C') == 'G'
+@pytest.fixture
+def configured_input(tmp_path, repository_root, monkeypatch):
+    fastq = tmp_path / "reads with spaces.fastq"
+    fastq.write_text("@read\nACGTACGTTGCACTGA\n+\nIIIIIIIIIIIIIIII\n")
+    monkeypatch.setattr("basic_assembler.alignment.resolve_bowtie",
+                        lambda requested: ("/stub/bowtie2", "stub version"))
+    return {"FASTQ": str(fastq), "database_path": str(repository_root / "db"),
+            "output_location": str(tmp_path / "output not created")}
 
 
-def test_reverse_complement():
-    assert BASIC.revcom('ATGC') == 'GCAT'
+def test_single_and_paired_configuration(configured_input):
+    single = config_args(configured_input)
+    assert single["read_type"] == "single"
+    assert single["single"] == [configured_input["FASTQ"]]
+    paired = config_args(dict(configured_input, FASTQ="", LEFT=configured_input["FASTQ"],
+                              RIGHT=configured_input["FASTQ"]))
+    assert paired["read_type"] == "paired"
+    assert paired["left"] == paired["right"]
 
 
-class TestConfig(object):
+@pytest.mark.parametrize("changes", [
+    {"FASTQ": ""}, {"FASTQ": "", "LEFT": "missing"},
+    {"FASTQ": "", "RIGHT": "missing"}, {"LEFT": "conflicting"},
+    {"type": "invalid"}, {"name": "../escape"}, {"genome": "../escape"},
+    {"num_threads": 0}, {"subsample": -1}, {"subsample": 0},
+    {"trim_quality": 94}, {"min_support": 0},
+    {"quality_weighted": True}, {"mate_aware": True, "scoring": "evidence"},
+])
+def test_invalid_options_fail_before_running(configured_input, changes):
+    with pytest.raises(ValueError):
+        config_args(dict(configured_input, **changes))
 
-    def setup_method(self):
-        self.repo_path = os.path.dirname(os.path.dirname(
-            os.path.abspath(__file__)
-            ))
 
-        self.args = {
-            'type': 'BCR',
-            'num_threads': 2,
-            'name': 'result',
-            'FASTQ': '',
-            'LEFT': os.path.join(
-                self.repo_path,
-                'examples/H8_AW1/R1_100K_reads.fastq.gz'),
-            'RIGHT': os.path.join(
-                self.repo_path,
-                'examples/H8_AW1/R2_100K_reads.fastq.gz'),
-            'genome': 'human',
-            'bowtie': utils.find_bowtie2(),
-            'tmpdir': './',
-            'output_location': './',
-            'allow_partial': False,
-            'VERBOSE': False,
-            'database_path': '',
-            'subsample': None,
-        }
+def test_validation_does_not_create_output_directory(configured_input):
+    from pathlib import Path
+    config_args(configured_input)
+    assert not Path(configured_input["output_location"]).exists()
 
-    def test_default_args_with_ex_fastqs(self):
-        args_out = BASIC.config_args(self.args)
-        assert args_out['read_type'] == 'paired'
 
-    def test_single_end_fastq(self):
-        self.args['LEFT'] = ''
-        self.args['RIGHT'] = ''
-        self.args['FASTQ'] = 'examples/cell_A1/ERR1421621_1M_reads.fastq.gz'
-        args_out = BASIC.config_args(self.args)
-        assert args_out['read_type'] == 'single'
+def test_missing_database_shard_is_rejected(configured_input, tmp_path):
+    from basic_assembler.alignment import AlignmentError
+    database = tmp_path / "incomplete" / "human" / "BCR"
+    database.mkdir(parents=True)
+    (database / "hc").write_text(">reference\nACGT\n")
+    with pytest.raises(AlignmentError, match="Incomplete"):
+        config_args(dict(configured_input, database_path=str(database.parent.parent)))
 
-    def test_missing_seqs(self):
-        self.args['LEFT'] = ''
-        self.args['RIGHT'] = ''
-        with pytest.raises(SystemExit):
-            BASIC.config_args(self.args)
 
-    def test_missing_left_of_paired_seqs(self):
-        self.args['LEFT'] = ''
-        with pytest.raises(SystemExit):
-            BASIC.config_args(self.args)
+def test_custom_species_uses_database_directory(configured_input, tmp_path):
+    database = tmp_path / "custom" / "test_species" / "BCR"
+    database.mkdir(parents=True)
+    for region in ("hv", "hc", "lv", "lc"):
+        for shard in ("1", "2", "3", "4", "rev.1", "rev.2"):
+            (database / f"{region}.{shard}.bt2").write_bytes(b"stub index")
+    result = config_args(dict(configured_input, genome="test_species",
+                              database_path=str(database.parent.parent)))
+    assert result["db_path"] == str(database)
 
-    def test_missing_right_of_paired_seqs(self):
-        self.args['RIGHT'] = ''
-        with pytest.raises(SystemExit):
-            BASIC.config_args(self.args)
 
-    def test_invalid_assembly_type(self):
-        self.args['type'] = 'BCX'
-        with pytest.raises(SystemExit):
-            BASIC.config_args(self.args)
+def test_unequal_lane_lists_are_rejected(configured_input):
+    path = configured_input["FASTQ"]
+    with pytest.raises(ValueError, match="same number"):
+        config_args(dict(configured_input, FASTQ="", LEFT=path, RIGHT=f"{path},{path}"))
 
-    def test_invalid_genome(self):
-        self.args['genome'] = 'HUMAX'
-        with pytest.raises(SystemExit):
-            BASIC.config_args(self.args)
 
-    def test_invalid_db_path(self):
-        self.args['database_path'] = os.path.abspath(__file__)
-        with pytest.raises(SystemExit):
-            BASIC.config_args(self.args)
-
-    def test_invalid_output_location(self):
-        self.args['output_location'] = '/nopermission'
-        with pytest.raises(SystemExit):
-            BASIC.config_args(self.args)
-
-    def test_wrong_bowtie2_path(self):
-        self.args['bowtie'] = 'nonexistent'
-        with pytest.raises(EnvironmentError):
-            BASIC.config_args(self.args)
-
-    def test_bowtie2_passing_directory(self):
-        self.args['bowtie'] = os.path.dirname(self.args['bowtie'])
-        args_out = BASIC.config_args(self.args)
-        assert args_out['read_type'] == 'paired'
-
-    def test_subsample(self, tmpdir):
-
-        with utils.make_temp_dir() as temp_dir:
-
-            reads_subsampled = 100
-
-            args = BASIC.config_args(self.args)
-            args['subsample'] = reads_subsampled
-            args['tmpdir'] = temp_dir
-
-            BASIC.run_bowtie2(args)
-
-            for chain_type in ['hv', 'hc', 'lv', 'lc']:
-                line_cnt = 0
-                with open('{}/{}.{}'.format(temp_dir,
-                                            args['name'],
-                                            chain_type)) as f:
-                    for line in f:
-                        line_cnt += 1
-
-                assert line_cnt == reads_subsampled
+def test_default_algorithm_options_are_explicit():
+    args = parse_args([])
+    assert args["scoring"] == "legacy"
+    assert args["beam_width"] == args["max_anchors"] == args["max_candidates"] == 1
+    assert args["subsample"] is None
+    assert not args["quality_weighted"]
+    assert not args["mate_aware"]
