@@ -40,10 +40,19 @@ separate executable. Installed commands are `basic-assemble`, `BASIC.py`,
 `basic-references`, and `basic-skill`. `python BASIC.py` also works directly
 from the checkout.
 
-The 2.0 distribution is being prepared for PyPI as `basic-immune-assembler`
-and for Bioconda under the existing name `basic`. Use the checkout instructions
-above until those releases are published. See the [installation guide](docs/INSTALLATION.md)
-for pip, pipx, uv, Conda/Mamba, and platform details.
+You can also install the published 2.0 wheel into a Python environment with
+Bowtie2 available:
+
+```bash
+python -m pip install https://github.com/akds/BASIC/releases/download/v2.0.0/basic_immune_assembler-2.0.0-py3-none-any.whl
+```
+
+[Release downloads and checksums](https://github.com/akds/BASIC/releases/tag/v2.0.0)
+include the wheel, source, and standalone agent skill. PyPI publication as
+`basic-immune-assembler` is deferred. The Bioconda update keeps the package name
+`basic` and requires a separate review and build; check its available version
+before installing. See the [installation guide](docs/INSTALLATION.md) for pip,
+pipx, uv, Conda/Mamba, and platform details.
 
 ## Quick start
 

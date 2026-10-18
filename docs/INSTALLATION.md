@@ -4,7 +4,7 @@ BASIC needs Python 3.10+ and the **Bowtie2 executable**. IgBLAST is optional
 and requires its own germline databases. The wheel contains BASIC, human/mouse
 reference indexes, and the agent skill; it does not contain Bowtie2 or IgBLAST.
 
-## Install the prepared release now
+## Install 2.0 now
 
 From the source checkout:
 
@@ -23,19 +23,21 @@ in a Python environment:
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install dist/basic_immune_assembler-2.0.0-py3-none-any.whl
+python -m pip install https://github.com/akds/BASIC/releases/download/v2.0.0/basic_immune_assembler-2.0.0-py3-none-any.whl
 basic-assemble --version
 ```
 
-Run the wheel command from the directory containing `dist/`, or use an absolute
-path. If Bowtie2 is outside `PATH`, supply `-b /path/to/bowtie2` when assembling.
+The command downloads the [published GitHub wheel](https://github.com/akds/BASIC/releases/tag/v2.0.0);
+you can also pass the path to a previously downloaded wheel. If Bowtie2 is
+outside `PATH`, supply `-b /path/to/bowtie2` when assembling.
 Reference construction similarly needs `bowtie2-build`.
 
 ## After the public registries publish 2.0.0
 
-These are the intended registry commands. At preparation time, Bioconda still
-lists 1.5.1 and the new PyPI distribution has not been published. Do not assume
-these commands provide 2.0 until publication is verified.
+These are the intended registry commands. PyPI publication is deferred, and
+the Bioconda update requires its own review and build. Use the GitHub wheel or
+source until your chosen registry lists 2.0.0; do not assume these commands
+provide it before then.
 
 | Installer | Install or upgrade command | Source |
 | --- | --- | --- |
