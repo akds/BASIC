@@ -1,7 +1,7 @@
 # Preparing a Bioconda update
 
 This repository contains a **staged recipe generator**, not a published BASIC
-2.0.0 conda package. It preserves the existing conda package name `basic`.
+2.0.1 conda package. It preserves the existing conda package name `basic`.
 The Python distribution is named `basic-immune-assembler`.
 
 ## Existing package and upstream comparison
@@ -35,7 +35,7 @@ that exact file to the generator. For the current version:
 
 ```bash
 python packaging/bioconda/prepare.py \
-  --sdist dist/basic_immune_assembler-2.0.0.tar.gz \
+  --sdist dist/basic_immune_assembler-2.0.1.tar.gz \
   --output /tmp/basic-conda-recipe
 ```
 
@@ -78,7 +78,7 @@ and `LICENSE`; the generator requires that file to exist inside the sdist.
 Review the generated recipe and tests, remove any obsolete old `build.sh`
 when preparing the update to Bioconda's existing `recipes/basic/` directory,
 and run the Bioconda checks. Publication and opening a pull request are
-separate maintainer actions. Version 2.0.0 is not available through
+separate maintainer actions. Version 2.0.1 is not available through
 `conda install basic` merely because these preparation files exist.
 
 ## Local validation

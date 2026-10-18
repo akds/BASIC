@@ -16,7 +16,6 @@ import os
 from pathlib import Path
 import re
 import shutil
-import signal
 import subprocess
 import tempfile
 import time
@@ -28,6 +27,7 @@ import uuid
 from . import __version__
 from .alignment import AlignmentError, validate_indexes
 from .assembly import normalize_sequence, revcom
+from .processes import cleanup_process
 
 
 REGIONS = ("hv", "hc", "lv", "lc")
@@ -295,14 +295,7 @@ def _run_builder(command, timeout):
     try:
         output, _ = process.communicate(timeout=timeout)
     except BaseException:
-        try:
-            if os.name == "posix":
-                os.killpg(process.pid, signal.SIGKILL)
-            else:
-                process.kill()
-        except ProcessLookupError:
-            pass
-        process.communicate()
+        cleanup_process(process)
         raise
     return process.returncode, output
 

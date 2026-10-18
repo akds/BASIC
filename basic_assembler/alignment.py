@@ -9,9 +9,10 @@ import os
 from pathlib import Path
 import re
 import shutil
-import signal
 import subprocess
 import threading
+
+from .processes import cleanup_process, stop_process_tree as _stop_process_tree
 
 
 _VERSION_TIMEOUT = 30.0
@@ -32,17 +33,6 @@ class MappingResult:
     command: list[str]
 
 
-def _stop_process_tree(process: subprocess.Popen) -> None:
-    """Stop the wrapper and descendants, including children holding stdout open."""
-    try:
-        if os.name == "posix":
-            os.killpg(process.pid, signal.SIGKILL)
-        elif process.poll() is None:
-            process.kill()
-    except ProcessLookupError:
-        pass
-
-
 def resolve_bowtie(executable: str | Path = "bowtie2") -> tuple[str, str]:
     """Resolve a directory, explicit executable, or executable in PATH."""
     requested = Path(executable).expanduser()
@@ -60,8 +50,7 @@ def resolve_bowtie(executable: str | Path = "bowtie2") -> tuple[str, str]:
     try:
         output, _ = process.communicate(timeout=_VERSION_TIMEOUT)
     except BaseException as exc:
-        _stop_process_tree(process)
-        process.communicate()
+        cleanup_process(process)
         if isinstance(exc, subprocess.TimeoutExpired):
             raise AlignmentError(f"Bowtie2 version query timed out after {_VERSION_TIMEOUT:g} seconds at {resolved}") from exc
         raise
@@ -128,8 +117,9 @@ def run_alignment(
     detection. It retains the complete SAM read; homology is not a validated
     species or gene assignment.
     When supplied, ``timeout`` bounds the entire alignment subprocess and its
-    output stream. On POSIX, failed or timed-out jobs stop the whole process
-    group; no fixed limit is imposed on legitimate long-running jobs by default.
+    output stream. On POSIX, cleanup attempts to stop the process group, falling
+    back to the direct child if group signalling is denied. No fixed limit is
+    imposed on legitimate long-running jobs by default.
     ``original_sequences`` is an optional sparse prepared-QNAME lookup for reads
     with IUPAC ambiguity. Bowtie2 replaces those symbols with N; restoring them
     in the SAM strand keeps candidate sequences consistent with the read pool.
@@ -231,8 +221,7 @@ def run_alignment(
                 grouped[key]["mapq"] = max(grouped[key]["mapq"], mapq)
             returncode = process.wait()
         except BaseException as exc:
-            _stop_process_tree(process)
-            process.wait()
+            cleanup_process(process)
             if timed_out.is_set() and isinstance(exc, Exception):
                 detail = _stderr_tail(stderr_path)
                 raise AlignmentError(f"Bowtie2 timed out after {timeout:g} seconds; log: {stderr_path}"
@@ -248,7 +237,10 @@ def run_alignment(
                 timer.cancel()
                 timer.join()
             if process.stdout is not None:
-                process.stdout.close()
+                try:
+                    process.stdout.close()
+                except (OSError, ValueError):
+                    pass
     if timed_out.is_set():
         detail = _stderr_tail(stderr_path)
         raise AlignmentError(f"Bowtie2 timed out after {timeout:g} seconds; log: {stderr_path}"

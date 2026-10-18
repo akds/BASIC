@@ -42,9 +42,10 @@ BASIC_BOWTIE2=/path/to/bowtie2 python -m pytest \
 ```
 
 Without Bowtie2, real-aligner tests skip. The explicit environment variable
-requires the named executable. GitHub Actions defines additional Linux/macOS
-and Python 3.10/3.12/3.14 checks; those remote jobs have not been run from this
-source snapshot.
+requires the named executable. GitHub Actions also checks Linux/macOS and
+Python 3.10/3.12/3.14. Consult the [Actions runs](https://github.com/akds/BASIC/actions)
+for the status of a particular revision; local results alone do not establish
+that its remote checks passed.
 
 ## Assembly regressions with real Bowtie2
 

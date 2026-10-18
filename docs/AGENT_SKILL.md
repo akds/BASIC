@@ -34,7 +34,7 @@ Python 3.10 or newer:
 ```bash
 python3 -m venv '/path/to/basic-venv'
 '/path/to/basic-venv/bin/python' -m pip install \
-  '/path/to/basic_immune_assembler-2.0.0-py3-none-any.whl'
+  '/path/to/basic_immune_assembler-2.0.1-py3-none-any.whl'
 '/path/to/basic-venv/bin/basic-assemble' --version
 '/path/to/basic-venv/bin/basic-skill' --agent all \
   --project '/path/to/analysis-project'
