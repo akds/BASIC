@@ -2,6 +2,7 @@
 
 from pathlib import Path
 import os
+import subprocess
 import sys
 import tempfile
 import time
@@ -67,6 +68,43 @@ class AlignmentTests(unittest.TestCase):
         for value in values:
             with self.subTest(value=value), self.assertRaises(AlignmentError):
                 self.align(self.executable(value))
+
+    @unittest.skipUnless(os.name == "posix", "Process-group cleanup is POSIX-specific")
+    def test_group_permission_error_preserves_alignment_errors_and_reaps_child(self):
+        for mode in ("malformed", "alignment_timeout", "version_timeout"):
+            with self.subTest(mode=mode):
+                executable = Path(self.executable())
+                executable.write_text(
+                    f"#!{sys.executable}\nimport time\n"
+                    + ("print('bad SAM', flush=True)\n" if mode == "malformed" else "")
+                    + "time.sleep(30)\n")
+                children = []
+                real_popen = subprocess.Popen
+
+                def start(*args, **kwargs):
+                    child = real_popen(*args, **kwargs)
+                    children.append(child)
+                    return child
+
+                started = time.monotonic()
+                try:
+                    with patch("basic_assembler.processes.os.killpg", side_effect=PermissionError("denied")), \
+                            patch("basic_assembler.alignment.subprocess.Popen", side_effect=start), \
+                            patch("basic_assembler.alignment._VERSION_TIMEOUT", 0.2):
+                        message = "Malformed SAM" if mode == "malformed" else "timed out"
+                        with self.assertRaisesRegex(AlignmentError, message):
+                            if mode == "version_timeout":
+                                resolve_bowtie(executable)
+                            else:
+                                self.align(executable, timeout=0.2 if mode == "alignment_timeout" else 5)
+                    self.assertLess(time.monotonic() - started, 3)
+                    self.assertTrue(children)
+                    self.assertTrue(all(child.poll() is not None for child in children))
+                finally:
+                    for child in children:
+                        if child.poll() is None:
+                            child.kill()
+                        child.wait(timeout=3)
 
     def test_grouping_and_ranking_are_deterministic(self):
         rows = [sam("a", "Z|TRBV1*01|human", mapq=20),
