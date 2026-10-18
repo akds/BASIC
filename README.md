@@ -13,6 +13,87 @@ mouse references are included.
 Reads must already be separated by cell. BASIC does not separate cell barcodes
 or deduplicate UMIs.
 
+[Download and run](#download-and-run) · [Conda](#using-conda) · [Agent skills](#agent-skills)
+
+## Download and run
+
+BASIC runs directly from the downloaded source on Linux or macOS. You need
+**Python 3.10+** and **[Bowtie2](https://bowtie-bio.sourceforge.net/bowtie2/manual.shtml#obtaining-bowtie-2)**;
+no Conda, pip installation, or additional Python packages are required.
+
+1. Download the [BASIC 2.0 source ZIP](https://github.com/akds/BASIC/archive/refs/tags/v2.0.1.zip).
+2. Extract it and open a terminal in the extracted folder.
+3. Run the included human B-cell example:
+
+```bash
+python3 BASIC.py --version
+python3 BASIC.py -SE examples/cell_A1/ERR1421621_1M_reads.fastq.gz \
+  -g human -i BCR -n result -o results/cell_A1 -p 2
+```
+
+Keep the source folder together: `BASIC.py` uses the accompanying
+`basic_assembler/` code and `db/` references. If Bowtie2 is not on your
+executable search path, append `-b /path/to/bowtie2` to the assembly command.
+Check `python3 --version` if you are unsure which Python is installed.
+
+This example has one million single-end reads. Expect two contigs: a heavy
+chain of **878 nucleotides** and a light chain of **829 nucleotides**, saved in
+`results/cell_A1/result.fasta`. Reports are saved in the same directory. The
+comparison below checks both sequences against the supplied result.
+
+Add `--check` to verify paths, indexes, and dependencies before assembly; it
+does not read every FASTQ record. To rerun, choose a new output directory or
+add `--overwrite` to replace existing results.
+
+## Using Conda
+
+If you prefer Conda to manage Python and Bowtie2, run these commands from the
+extracted source folder:
+
+```bash
+conda env create -f environment.yml
+conda activate basic-2
+python3 BASIC.py --version
+```
+
+Then run the examples with `python3 BASIC.py` as above. To also install the
+`basic-assemble` command used in the extended guides, run
+`python -m pip install .` in this environment. It accepts the same arguments
+as `python3 BASIC.py`.
+
+The [installation guide](docs/INSTALLATION.md) covers release wheels, pipx,
+uv, and platform details. PyPI publication is deferred; the Bioconda `basic`
+package update is still pending. The Conda environment above works with the
+downloaded source now.
+
+## Agent skills
+
+BASIC includes a portable skill for **Codex, Claude Code, and Antigravity
+(agy)**. It guides an assistant through input checks, BCR/TCR assembly,
+custom references, optional annotation, and interpreting results.
+
+From the extracted BASIC folder, copy the skill into an existing analysis
+project:
+
+```bash
+python3 -m basic_assembler.skill_cli --agent all \
+  --project '/path/to/analysis-project'
+```
+
+This installs the skill in the project's `.agents/skills/basic-assemble/`
+and `.claude/skills/basic-assemble/` folders. It copies instructions only;
+Python, Bowtie2, and the BASIC source must still be available.
+
+Open that project in your assistant and provide the BASIC source location.
+For example:
+
+> Use the basic-assemble skill and the BASIC source at /path/to/BASIC to
+> assemble the human BCR reads in reads/cell_001.fastq.gz. Check the inputs
+> first and save the results in results/cell_001.
+
+See the [agent skill guide](docs/AGENT_SKILL.md) for individual assistant
+options and updating an existing skill.
+
 ## The idea behind BASIC
 
 Each sequencing read covers a short part of a transcript. **Assembly** joins
@@ -32,43 +113,6 @@ full coding sequence, a productive receptor, or a correct CDR3. Optional
 IgBLAST annotation can add gene calls, junction/CDR3 information, and predicted
 productivity.
 
-## Install and try an example
-
-BASIC requires **Python 3.10+** and **Bowtie2**. On Linux or macOS, the following
-commands install BASIC and its dependencies and give you a copy of the
-examples. Git and Conda must already be installed:
-
-```bash
-git clone https://github.com/akds/BASIC.git
-cd BASIC
-conda env create -f environment.yml
-conda activate basic-2
-python -m pip install .
-basic-assemble --version
-```
-
-If Python 3.10+ and Bowtie2 are already installed, run `python -m pip install .`
-from the checkout in your Python environment. The [installation guide](docs/INSTALLATION.md)
-also covers [release wheels and checksums](https://github.com/akds/BASIC/releases/tag/v2.0.1),
-pipx, uv, and platform details. PyPI publication is deferred; the Bioconda
-`basic` update requires separate review and publication.
-
-From the repository root, run the included human B-cell example:
-
-```bash
-basic-assemble -SE examples/cell_A1/ERR1421621_1M_reads.fastq.gz \
-  -g human -i BCR -n result -o results/cell_A1 -p 2
-```
-
-This example has one million single-end reads. Expect two contigs: a heavy
-chain of **878 nucleotides** and a light chain of **829 nucleotides**, saved in
-`results/cell_A1/result.fasta`. Reports are saved in the same directory. The
-comparison below checks both sequences against the supplied result.
-
-Add `--check` to verify paths, indexes, and dependencies before assembly; it
-does not read every FASTQ record. To rerun, choose a new output directory or
-add `--overwrite` to replace existing results.
-
 ## Use your own reads
 
 Use reads with coverage across the receptor transcript. BASIC accepts
@@ -80,11 +124,11 @@ Replace the filenames below with reads from one cell:
 
 ```bash
 # Human BCR, paired-end reads
-basic-assemble -PE_1 cell_R1.fastq.gz -PE_2 cell_R2.fastq.gz \
+python3 BASIC.py -PE_1 cell_R1.fastq.gz -PE_2 cell_R2.fastq.gz \
   -g human -i BCR -n cell_001 -o results
 
 # Human TCR, single-end reads
-basic-assemble -SE t_cell.fastq.gz \
+python3 BASIC.py -SE t_cell.fastq.gz \
   -g human -i TCR -n t_cell_001 -o results
 ```
 
@@ -95,7 +139,7 @@ and `TRB`; matching mouse reads and references also support gamma/delta
 By default, BASIC exits with an error if assembly is incomplete. Add **`-a`**
 to retain partial or empty assembly results. Invalid input and execution
 errors still cause the run to fail. Use `-p 4` for four Bowtie2 threads or
-`-b /path/to/bowtie2` to select the executable. Run `basic-assemble --help` for
+`-b /path/to/bowtie2` to select the executable. Run `python3 BASIC.py --help` for
 all options.
 
 ## Read the results
@@ -125,7 +169,7 @@ verify its output checksums. See [output and algorithm details](docs/ALGORITHMS.
 Compare the example you just assembled with the supplied BASIC result:
 
 ```bash
-python benchmarks/benchmark.py \
+python3 benchmarks/benchmark.py \
   --expected-fasta examples/cell_A1/result.fasta \
   --actual-fasta results/cell_A1/result.fasta \
   --label included-human-bcr-regression \
