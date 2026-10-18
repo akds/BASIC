@@ -1,0 +1,10 @@
+name: basic-2
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.12
+  - bowtie2=2.5.5
+  - pip
+# Then run: python -m pip install .
+# IgBLAST is optional and requires separately selected germline databases.

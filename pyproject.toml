@@ -1,0 +1,66 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "basic-immune-assembler"
+dynamic = ["version"]
+description = "BCR and TCR assembly from single-cell RNA-seq"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE", "LICENSE-NOTICE.md"]
+authors = [{name = "BASIC contributors"}]
+dependencies = []
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python :: 3",
+  "Topic :: Scientific/Engineering :: Bio-Informatics",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8,<10", "pytest-cov>=7,<8"]
+
+[project.scripts]
+basic-assemble = "basic_assembler.cli:main"
+"BASIC.py" = "basic_assembler.cli:main"
+basic-references = "basic_assembler.reference_builder:main"
+basic-skill = "basic_assembler.skill_cli:main"
+
+[project.urls]
+Homepage = "https://github.com/akds/BASIC"
+Repository = "https://github.com/akds/BASIC"
+Issues = "https://github.com/akds/BASIC/issues"
+
+[tool.setuptools]
+packages = [
+  "basic_assembler",
+  "basic_assembler.agent_skill",
+  "basic_assembler.agent_skill.references",
+  "basic_assembler.references",
+  "basic_assembler.references.human",
+  "basic_assembler.references.mouse",
+  "basic_assembler.references.human.BCR",
+  "basic_assembler.references.human.TCR",
+  "basic_assembler.references.mouse.BCR",
+  "basic_assembler.references.mouse.TCR",
+]
+py-modules = ["BASIC"]
+include-package-data = true
+
+[tool.setuptools.package-dir]
+"basic_assembler.references" = "db"
+"basic_assembler.agent_skill" = "skills/basic-assemble"
+
+[tool.setuptools.package-data]
+"basic_assembler.references" = ["human/BCR/*", "human/TCR/*", "mouse/BCR/*", "mouse/TCR/*", "provenance.json"]
+"basic_assembler.agent_skill" = ["SKILL.md"]
+"basic_assembler.agent_skill.references" = ["*.md"]
+
+[tool.setuptools.dynamic]
+version = {attr = "basic_assembler.__version__"}
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+markers = ["integration: requires a real Bowtie2 executable and bundled example reads"]

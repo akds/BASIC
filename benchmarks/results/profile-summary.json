@@ -1,0 +1,131 @@
+{
+  "method": "cProfile of one full new single-end example before regex quality validation optimization; timing includes instrumentation overhead",
+  "elapsed_seconds": 27.251212454999965,
+  "total_calls": 175947142,
+  "peak_rss": null,
+  "peak_rss_note": "Peak RSS measurement was unavailable; no value is reported.",
+  "fasta_sha256": "487a1357c3c8840efbe730aad76421c2219f7a27ebfa3efbc9a267707a21afe3",
+  "functions": [
+    {
+      "file": "basic_assembler/__main__.py",
+      "line": 1,
+      "function": "<module>",
+      "calls": 1,
+      "self_seconds": 1.0835e-05,
+      "cumulative_seconds": 27.253484542000002
+    },
+    {
+      "file": "basic_assembler/cli.py",
+      "line": 191,
+      "function": "main",
+      "calls": 1,
+      "self_seconds": 0.005848123,
+      "cumulative_seconds": 27.245200041
+    },
+    {
+      "file": "basic_assembler/pipeline.py",
+      "line": 270,
+      "function": "run_sample",
+      "calls": 1,
+      "self_seconds": 0.008900881000000001,
+      "cumulative_seconds": 27.160341625
+    },
+    {
+      "file": "basic_assembler/reads.py",
+      "line": 103,
+      "function": "load_read_pool",
+      "calls": 1,
+      "self_seconds": 0.294056987,
+      "cumulative_seconds": 16.803073709
+    },
+    {
+      "file": "basic_assembler/reads.py",
+      "line": 57,
+      "function": "_read_record",
+      "calls": 1000001,
+      "self_seconds": 2.5553308230000003,
+      "cumulative_seconds": 11.983005737000001
+    },
+    {
+      "file": "basic_assembler/alignment.py",
+      "line": 105,
+      "function": "run_alignment",
+      "calls": 4,
+      "self_seconds": 8.411070286000001,
+      "cumulative_seconds": 8.698556416
+    },
+    {
+      "file": "basic_assembler/reads.py",
+      "line": 85,
+      "function": "<genexpr>",
+      "calls": 51000000,
+      "self_seconds": 3.2850511890000003,
+      "cumulative_seconds": 4.6187823550000005
+    },
+    {
+      "file": "basic_assembler/reads.py",
+      "line": 170,
+      "function": "retain",
+      "calls": 1000000,
+      "self_seconds": 1.8968126070000002,
+      "cumulative_seconds": 4.525389151000001
+    },
+    {
+      "file": "basic_assembler/pipeline.py",
+      "line": 171,
+      "function": "_assemble_results",
+      "calls": 1,
+      "self_seconds": 6.8755e-05,
+      "cumulative_seconds": 1.562431708
+    },
+    {
+      "file": "basic_assembler/assembly.py",
+      "line": 74,
+      "function": "__init__",
+      "calls": 1,
+      "self_seconds": 0.309313139,
+      "cumulative_seconds": 1.510296333
+    },
+    {
+      "file": "basic_assembler/reads.py",
+      "line": 186,
+      "function": "<genexpr>",
+      "calls": 4957634,
+      "self_seconds": 0.650022002,
+      "cumulative_seconds": 1.40661655
+    },
+    {
+      "file": "basic_assembler/assembly.py",
+      "line": 22,
+      "function": "normalize_sequence",
+      "calls": 1038080,
+      "self_seconds": 0.30093147200000003,
+      "cumulative_seconds": 0.332178203
+    },
+    {
+      "file": "basic_assembler/reads.py",
+      "line": 39,
+      "function": "_revcom",
+      "calls": 961547,
+      "self_seconds": 0.14776297000000002,
+      "cumulative_seconds": 0.30318202
+    },
+    {
+      "file": "basic_assembler/reads.py",
+      "line": 63,
+      "function": "<genexpr>",
+      "calls": 4000000,
+      "self_seconds": 0.192586632,
+      "cumulative_seconds": 0.192586632
+    },
+    {
+      "file": "basic_assembler/alignment.py",
+      "line": 197,
+      "function": "<genexpr>",
+      "calls": 1353682,
+      "self_seconds": 0.100775574,
+      "cumulative_seconds": 0.14179064600000002
+    }
+  ],
+  "optimization": "Replaced identical Phred+33 character-range validation with compiled regex after profiling; avoids one Python generator/ord call per quality character. Separate 100k 50nt quality-string microbenchmark: old0.122s, regex0.0148s. This is not an end-to-end speedup estimate."
+}
