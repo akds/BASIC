@@ -1,0 +1,143 @@
+name: Build and publish Python distributions
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      destination:
+        description: Build only, test registry, or production PyPI (requires version tag)
+        type: choice
+        default: build-only
+        options: [build-only, testpypi, pypi]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-${{ github.ref }}-${{ inputs.destination || 'pypi' }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check production version tag
+        env:
+          DESTINATION: ${{ github.event_name == 'release' && 'pypi' || inputs.destination }}
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          python - <<'PY'
+          import os
+          from basic_assembler import __version__
+          if os.environ['DESTINATION'] == 'pypi':
+              expected = 'v' + __version__
+              if os.environ['REF_TYPE'] != 'tag' or os.environ['REF_NAME'] != expected:
+                  raise SystemExit('Production publishing requires tag ' + expected)
+          PY
+      - run: python -m pip install -r requirements-release.lock
+      - run: python -m pip install --no-build-isolation -e .
+      - name: Install tested Bowtie2
+        run: |
+          curl -L --fail https://github.com/BenLangmead/bowtie2/releases/download/v2.5.5/bowtie2-2.5.5-linux-x86_64.zip -o "$RUNNER_TEMP/bowtie2.zip"
+          unzip -q "$RUNNER_TEMP/bowtie2.zip" -d "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/bowtie2-2.5.5-linux-x86_64" >> "$GITHUB_PATH"
+      - name: Test assembly and release helpers
+        env:
+          BASIC_BOWTIE2: ${{ runner.temp }}/bowtie2-2.5.5-linux-x86_64/bowtie2
+        run: |
+          "$BASIC_BOWTIE2" --version
+          python -m pytest
+          python -m unittest discover -s packaging/bioconda -p 'test_*.py'
+      - run: python -m build --no-isolation
+      - run: python -m twine check --strict dist/*
+      - name: Verify wheel outside checkout
+        run: |
+          python -m venv "$RUNNER_TEMP/basic-wheel-check"
+          "$RUNNER_TEMP/basic-wheel-check/bin/python" -m pip install --no-deps dist/*.whl
+          cd "$RUNNER_TEMP"
+          "$RUNNER_TEMP/basic-wheel-check/bin/basic-assemble" --version
+          "$RUNNER_TEMP/basic-wheel-check/bin/BASIC.py" --version
+          "$RUNNER_TEMP/basic-wheel-check/bin/basic-references" --help
+          "$RUNNER_TEMP/basic-wheel-check/bin/basic-skill" --agent all --project "$RUNNER_TEMP"
+          "$RUNNER_TEMP/basic-wheel-check/bin/python" - <<'PY'
+          from basic_assembler.pipeline import default_database_path
+          from basic_assembler.alignment import validate_indexes
+          for species in ('human', 'mouse'):
+              for receptor in ('BCR', 'TCR'):
+                  validate_indexes(default_database_path() / species / receptor)
+          PY
+      - name: Prepare GitHub release assets
+        run: python packaging/release_assets.py --dist dist --skill skills/basic-assemble --output release-assets
+      - uses: actions/upload-artifact@v4
+        with:
+          name: python-distributions
+          path: |
+            dist/*.whl
+            dist/*.tar.gz
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: github-release-assets
+          path: release-assets/*
+          if-no-files-found: error
+
+  release-assets:
+    if: github.event_name == 'release'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: github-release-assets
+          path: release-assets
+      - name: Verify release asset checksums
+        working-directory: release-assets
+        run: sha256sum --check SHA256SUMS
+      - name: Upload assets to the published release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: gh release upload "$RELEASE_TAG" release-assets/* --repo "$GH_REPO"
+
+  testpypi:
+    if: github.event_name == 'workflow_dispatch' && inputs.destination == 'testpypi'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/p/basic-immune-assembler
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: python-distributions
+          path: dist
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+
+  pypi:
+    if: github.event_name == 'release' || inputs.destination == 'pypi'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/basic-immune-assembler
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: python-distributions
+          path: dist
+      - uses: pypa/gh-action-pypi-publish@release/v1
