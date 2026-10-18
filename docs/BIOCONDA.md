@@ -1,7 +1,7 @@
 # Preparing a Bioconda update
 
-This repository contains a **staged recipe generator**, not a published BASIC
-2.0.1 conda package. It preserves the existing conda package name `basic`.
+The recipe generator in this repository prepares BASIC 2.0.1 for conda; it
+does not publish the package. The conda package name remains `basic`.
 The Python distribution is named `basic-immune-assembler`.
 
 ## Existing package and upstream comparison
@@ -14,7 +14,7 @@ its bundled reference resources. See the official [recipe](https://github.com/bi
 [build script](https://github.com/bioconda/bioconda-recipes/blob/master/recipes/basic/build.sh),
 and [package history](https://bioconda.github.io/recipes/basic/README.html).
 
-Upstream's latest release is [v1.5.1](https://github.com/akds/BASIC/releases/tag/v1.5.1),
+The upstream version used for comparison was [v1.5.1](https://github.com/akds/BASIC/releases/tag/v1.5.1),
 published July 12, 2019. Compared with the starting 1.5.0 snapshot, the sole
 change captures Bowtie2's version output instead of printing it; there are no
 algorithm or reference changes in that comparison. The 1.5.1 README still
@@ -42,13 +42,12 @@ python packaging/bioconda/prepare.py \
 The output directory must not already exist. The generator reads the package
 name and version from `PKG-INFO`, verifies required source files, hashes the
 actual archive, and writes `meta.yaml`, `run_test.py`, and `preparation.json`.
-The default source is a local `file:` URI, suitable for local testing. There
-is no invented release URL or placeholder checksum. Regenerate after every
-sdist change; the checksum binds the recipe to exact bytes.
+The default source is a local `file:` URI for local testing. Regenerate the
+recipe after every sdist change so its checksum matches the archive.
 
 The recipe requires Python >=3.10 and Bowtie2, installs `basic-assemble`,
 `BASIC.py`, `basic-references`, and `basic-skill`, and packages human/mouse
-BCR/TCR references and the AI-agent skill.
+BCR/TCR references and the agent skill.
 IgBLAST and its germline databases remain separate, optional installations.
 It builds with pip without dependency downloads or build isolation; conda
 supplies setuptools, wheel, and pip. The [conda metadata documentation](https://docs.conda.io/projects/conda-build/en/stable/resources/define-metadata.html)
@@ -69,17 +68,17 @@ workflow, follow [Testing Recipes Locally](https://bioconda.github.io/contributo
 
 ## Stage the public update after release
 
-After the final sdist is actually hosted, rerun the generator with
+Once the final sdist is hosted, rerun the generator with
 `--source-url` set to its **exact existing HTTPS URL** and a new output
 directory. The generator downloads it and rejects any size or SHA256
 difference from the local archive. The default license metadata is `MIT`
 and `LICENSE`; the generator requires that file to exist inside the sdist.
 
-Review the generated recipe and tests, remove any obsolete old `build.sh`
+Review the generated recipe and tests, remove any obsolete `build.sh`
 when preparing the update to Bioconda's existing `recipes/basic/` directory,
-and run the Bioconda checks. Publication and opening a pull request are
-separate maintainer actions. Version 2.0.1 is not available through
-`conda install basic` merely because these preparation files exist.
+and run the Bioconda checks. Opening a pull request and publishing the package
+are separate steps. These preparation files alone do not make version 2.0.1
+available through `conda install basic`.
 
 ## Local validation
 

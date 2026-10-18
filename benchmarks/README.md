@@ -31,7 +31,7 @@ hardware and thread counts. The run manifest records BASIC's configuration.
 
 ## Compare your own assemblies
 
-`benchmark.py` compares assemblies with independently curated truth and emits
+`benchmark.py` compares assemblies with independently curated truth and writes
 JSON. It uses only Python's standard library. FASTA identifiers (the first token
 after `>`) must match between files; AIRR rows use the same `sequence_id`.
 Normalize identifiers in a separate copy when comparing tools. Nucleotide
@@ -76,10 +76,11 @@ Before accepting changes to assembly defaults, collect independently validated
 human and mouse BCR and TCR sequences with their raw reads and provenance. Run
 fixed-seed coverage subsamples and include low coverage, sequencing errors,
 mixed read lengths, multiple expressed chains, and ambiguous branches. Compare
-default and experimental modes on the same reads and reference versions. Keep
-species/receptor/coverage strata separate so abundant easy cases cannot hide
-failures in difficult cases. Curated junction/CDR3 truth and targeted inspection
-of joins are needed to evaluate biological correctness beyond containment.
+default and experimental modes on the same reads and reference versions.
+Compare results separately for each combination of species, receptor, and
+coverage so abundant easy cases cannot hide failures in difficult cases.
+Curated junction/CDR3 truth and targeted inspection of joins are needed to
+evaluate biological correctness beyond containment.
 
 The small fixtures in `tests/test_benchmarks.py` verify metric arithmetic. They
 are synthetic software tests, not biological performance evidence. No expanded

@@ -15,7 +15,7 @@ basic-skill --agent all --project '/path/to/analysis-project'
 ```
 
 The project directory must already exist. Omit `--project` to use the current
-directory. Select one agent instead of `all` when appropriate:
+directory. To install for a single agent, select it instead of `all`:
 
 | Option | Destination relative to the project | Official discovery documentation |
 | --- | --- | --- |
@@ -27,9 +27,8 @@ directory. Select one agent instead of `all` when appropriate:
 These are project installations. The command does not install a global skill,
 change agent settings, or install an agent application.
 
-For a verified local BASIC 2.0 wheel, an isolated installation on a POSIX system
-can be created as follows. Replace the paths with your actual files and use
-Python 3.10 or newer:
+To install a verified local BASIC 2.0 wheel in an isolated environment on a
+POSIX system, use Python 3.10 or newer and replace the example paths below:
 
 ```bash
 python3 -m venv '/path/to/basic-venv'
@@ -40,9 +39,9 @@ python3 -m venv '/path/to/basic-venv'
   --project '/path/to/analysis-project'
 ```
 
-This example uses a wheel you already obtained; it does not assume a published
-package version or download location. Installing the wheel supplies the
-`basic-skill` command. Installing the skill only copies its bundled instructions.
+This example uses a wheel you already have. Installing it
+supplies the `basic-skill` command. The skill installer copies only the bundled
+instructions.
 
 ## Inspect and use the skill
 
@@ -116,9 +115,9 @@ are rejected. Unrelated files are not removed.
 
 There is no overwrite flag. Before updating a customized skill, save your
 changes outside its discovery directory, compare them with the new bundled
-version, and deliberately remove the conflicting files or move the old skill
+version, and remove the conflicting files or move the old skill
 folder aside. Re-run the installer, then reapply relevant edits. If both
-discovery directories are used, maintain both copies deliberately.
+discovery directories are used, keep both copies up to date.
 
 On an ordinary write failure, the installer attempts to remove files it
 created during that attempt; existing files are preserved. This is not a
