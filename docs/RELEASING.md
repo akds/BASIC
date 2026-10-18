@@ -5,6 +5,10 @@ The README presents **2.0 (2026/10/18)**; Python and Conda use **2.0.0**, and th
 Git tag is **v2.0.0**. The software uses the standard [MIT license](../LICENSE).
 Reference data and external tools retain their terms.
 
+PyPI publication can be deferred independently of the GitHub release.
+Automatic PyPI uploads are disabled unless the repository Actions variable
+`PYPI_PUBLISH_ENABLED` is set to `true`. GitHub release assets still publish.
+
 Publication has three steps: merge the source update on GitHub, publish Python
 distributions to PyPI, and update the existing Bioconda `basic` recipe.
 Preparing these files does not publish any registry package.
@@ -86,6 +90,12 @@ and tag restrictions. The workflow uses short-lived OIDC credentials rather
 than a stored API token, as described by the
 [PyPI publishing guide](https://docs.pypi.org/trusted-publishers/using-a-publisher/).
 
+After configuring and testing the publisher, set the repository Actions
+variable `PYPI_PUBLISH_ENABLED` to `true` if future published releases should
+upload automatically. To publish this existing release later, manually run
+the workflow with destination `pypi` and ref `v2.0.0`; that explicit run does
+not require the variable. Until then, leave the variable unset or `false`.
+
 ## Publish the checked version
 
 1. Merge the reviewed branch. In Actions, run **Build and publish Python
@@ -100,7 +110,8 @@ than a stored API token, as described by the
    ```
 
 3. Tag the exact reviewed commit `v2.0.0`, push the tag, and publish its GitHub
-   release. The `release: published` event runs checks and publishes to PyPI.
+   release. The `release: published` event runs checks and uploads GitHub assets.
+   It also publishes to PyPI when `PYPI_PUBLISH_ENABLED` is `true`.
    A manual **pypi** run is also supported, but it must select the matching
    version tag. Production rejects a branch or mismatched tag.
 4. Verify `python -m pip install basic-immune-assembler==2.0.0` in a new
