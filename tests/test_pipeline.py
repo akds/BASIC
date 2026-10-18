@@ -406,4 +406,5 @@ def test_cli_module_and_legacy_entrypoints_agree():
     root = Path(__file__).resolve().parents[1]
     for command in ([sys.executable, str(root / 'BASIC.py')], [sys.executable, '-m', 'basic_assembler']):
         result = subprocess.run(command + ['--version'], cwd=root, text=True, capture_output=True)
-        assert result.returncode == 0 and '2.0.0' in result.stdout
+        from basic_assembler import __version__
+        assert result.returncode == 0 and __version__ in result.stdout

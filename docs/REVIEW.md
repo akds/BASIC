@@ -36,7 +36,7 @@ suite includes real Bowtie2 2.5.5 assembly regressions. Combined statement/branc
 coverage of `basic_assembler` is **93.38%**; statement coverage is 94.56%, and
 branch coverage is 90.63%. The assembler has every statement covered and 99% combined coverage.
 Module summaries and hashes of the tested implementation are saved in
-[the validation record](../benchmarks/results/validation.json).
+[the 2.0.0 validation record](../benchmarks/results/validation-2.0.0.json).
 
 Both the wheel and source distribution build successfully. A fresh environment
 outside the checkout passed all four installed-command checks, discovered all
@@ -82,3 +82,41 @@ Claude Opus 5.5 High and Gemini 4 Argon High via agy. Their concrete suggestions
 were incorporated and the standalone bundle validated. This **skill review**
 is separate from the incomplete earlier Gemini full-source review above; see
 [the skill review record](SKILL_REVIEW.md).
+
+## 2.0.1 correction after release
+
+A later macOS/Python 3.10 CI run exposed an intermittent process-group signal
+permission error during malformed-SAM cleanup. The cleanup error masked the
+original `AlignmentError`, despite earlier green CI runs. Version 2.0.1 adds
+a shared best-effort cleanup helper: it attempts group termination, falls back
+to the direct child, bounds failure-path reaping, and preserves the original
+error. Alignment, annotation, reference building, and benchmarking use it.
+
+Deterministic tests force denied signals, vanished processes, failed fallback
+termination, and failed pipe closure. Real subprocess tests cover malformed
+SAM and alignment/version/annotation/builder/benchmark timeouts. Existing tests
+for descendants that outlive the wrapper remain in place.
+
+The operating system still controls whether a process can be signalled. This
+change cannot guarantee termination of inaccessible descendants; if such a
+descendant holds the streaming aligner's stdout open, the timeout can still
+be exceeded. It does not change assembly scoring or establish new biological
+accuracy. Latest validation is recorded in
+[validation.json](../benchmarks/results/validation.json).
+
+The full local 2.0.1 suite passed **319 tests** with real Bowtie2 2.5.5 in
+45.63 seconds. Statement coverage was **95.08%**, branch coverage **91.20%**,
+and combined coverage **93.92%**. The shared cleanup helper had 100% statement
+and branch coverage in these tests; this does not imply all operating-system
+conditions are covered. The nine Bioconda recipe-generator tests also passed.
+
+A fresh local wheel installation passed all four entrypoints, all sixteen
+reference index prefixes, both assistant-skill exports, MIT metadata/license
+checks, and the installed-package Bioconda smoke harness. The full single-end
+example was byte-identical to the supplied result, and the benchmark reported
+two exact matches. This is wheel validation, not a completed conda build.
+
+The README and benchmark introduction were separately copyedited using a
+fresh Codex review plus successful Claude and Gemini critiques through agy.
+The [editorial review record](README_REVIEW.md) documents the changes and the
+suggestions corrected before adoption.

@@ -13,10 +13,11 @@ from pathlib import Path
 import re
 import shlex
 import shutil
-import signal
 import subprocess
 import tempfile
 import time
+
+from .processes import cleanup_process
 
 
 # AIRR Rearrangement schema 2.0 (also compatible with the 1.4 core).
@@ -45,14 +46,7 @@ def _run_igblast(command, environment, timeout):
     try:
         stdout, stderr = process.communicate(timeout=timeout)
     except BaseException:
-        try:
-            if os.name == "posix":
-                os.killpg(process.pid, signal.SIGKILL)
-            else:
-                process.kill()
-        except ProcessLookupError:
-            pass
-        process.communicate()
+        cleanup_process(process)
         raise
     return subprocess.CompletedProcess(command, process.returncode, stdout, stderr)
 

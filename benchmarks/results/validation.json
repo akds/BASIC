@@ -4,19 +4,19 @@
     "passed": 9
   },
   "coverage": {
-    "covered_branches": 774,
-    "covered_lines": 1876,
+    "covered_branches": 777,
+    "covered_lines": 1895,
     "excluded_lines": 0,
-    "missing_branches": 80,
-    "missing_lines": 108,
-    "num_branches": 854,
-    "num_partial_branches": 76,
-    "num_statements": 1984,
-    "percent_branches_covered": 90.63231850117096,
+    "missing_branches": 75,
+    "missing_lines": 98,
+    "num_branches": 852,
+    "num_partial_branches": 73,
+    "num_statements": 1993,
+    "percent_branches_covered": 91.19718309859155,
     "percent_branches_covered_display": "91",
-    "percent_covered": 93.37561663143059,
-    "percent_covered_display": "93",
-    "percent_statements_covered": 94.55645161290323,
+    "percent_covered": 93.91915641476274,
+    "percent_covered_display": "94",
+    "percent_statements_covered": 95.0827897641746,
     "percent_statements_covered_display": "95"
   },
   "date": "2026-10-18",
@@ -32,20 +32,45 @@
     "source_review": "incomplete: full-source and component CLI requests timed out with empty responses"
   },
   "installed_wheel_checks": {
-    "bioconda_smoke": "passed against wheel with real Bowtie2; not a conda build",
-    "bundled_index_sets": 4,
+    "benchmark": {
+      "actual_count": 2,
+      "common_id_count": 2,
+      "containment_recall": 1.0,
+      "exact_ids": [
+        "cell_id=result;heavy_chain;BASIC",
+        "cell_id=result;light_chain;BASIC"
+      ],
+      "exact_match_count": 2,
+      "exact_precision": 1.0,
+      "exact_recall": 1.0,
+      "expected_contained_count": 2,
+      "expected_contained_ids": [
+        "cell_id=result;heavy_chain;BASIC",
+        "cell_id=result;light_chain;BASIC"
+      ],
+      "expected_count": 2,
+      "extra_ids": [],
+      "mismatched_ids": [],
+      "missing_ids": [],
+      "strict_partial_count": 0,
+      "strict_partial_ids": []
+    },
+    "bioconda_smoke": "passed with real Bowtie2; not a conda build",
+    "bundled_index_prefixes": 16,
     "commands": [
-      "basic-assemble",
       "BASIC.py",
+      "basic-assemble",
       "basic-references",
       "basic-skill"
     ],
     "fasta_sha256": "487a1357c3c8840efbe730aad76421c2219f7a27ebfa3efbc9a267707a21afe3",
-    "fasta_sha256_scope": "FASTA normalized to bundled-example sample name result",
     "license": "MIT metadata and full license verified",
-    "native_single_end_regression": "Exact bundled-example match after normalizing only cell_id=installed_se to cell_id=result",
-    "raw_fasta_sha256": "4712f4a7e26b4b32f8ba41030e4691b21253d7afb84548c67f3143dfd200640e",
-    "skill_export": "both provider directories; complete main and reference guide"
+    "native_single_end_regression": "FASTA byte-identical to bundled cell_A1/result.fasta",
+    "scope": "Local 2.0.1 wheel; README subsequently copyedited, binary code unchanged; not a conda build",
+    "skill_export": "four matching files across .agents and .claude",
+    "status": "passed",
+    "version": "2.0.1",
+    "wheel_sha256": "a987511196f951cfe3011b7303f0998ff943ef91deb00188bcc1aaf3ab1a8a75"
   },
   "modules": {
     "basic_assembler/__init__.py": {
@@ -81,36 +106,36 @@
       "percent_statements_covered_display": "0"
     },
     "basic_assembler/alignment.py": {
-      "covered_branches": 63,
-      "covered_lines": 162,
+      "covered_branches": 62,
+      "covered_lines": 157,
       "excluded_lines": 0,
-      "missing_branches": 19,
-      "missing_lines": 26,
-      "num_branches": 82,
-      "num_partial_branches": 17,
-      "num_statements": 188,
-      "percent_branches_covered": 76.82926829268293,
-      "percent_branches_covered_display": "77",
-      "percent_covered": 83.33333333333333,
-      "percent_covered_display": "83",
-      "percent_statements_covered": 86.17021276595744,
-      "percent_statements_covered_display": "86"
+      "missing_branches": 16,
+      "missing_lines": 24,
+      "num_branches": 78,
+      "num_partial_branches": 16,
+      "num_statements": 181,
+      "percent_branches_covered": 79.48717948717949,
+      "percent_branches_covered_display": "79",
+      "percent_covered": 84.55598455598455,
+      "percent_covered_display": "85",
+      "percent_statements_covered": 86.74033149171271,
+      "percent_statements_covered_display": "87"
     },
     "basic_assembler/annotation.py": {
-      "covered_branches": 157,
-      "covered_lines": 317,
+      "covered_branches": 156,
+      "covered_lines": 314,
       "excluded_lines": 0,
-      "missing_branches": 5,
-      "missing_lines": 15,
-      "num_branches": 162,
-      "num_partial_branches": 5,
-      "num_statements": 332,
-      "percent_branches_covered": 96.91358024691358,
-      "percent_branches_covered_display": "97",
-      "percent_covered": 95.95141700404858,
-      "percent_covered_display": "96",
-      "percent_statements_covered": 95.48192771084338,
-      "percent_statements_covered_display": "95"
+      "missing_branches": 4,
+      "missing_lines": 12,
+      "num_branches": 160,
+      "num_partial_branches": 4,
+      "num_statements": 326,
+      "percent_branches_covered": 97.5,
+      "percent_branches_covered_display": "98",
+      "percent_covered": 96.70781893004116,
+      "percent_covered_display": "97",
+      "percent_statements_covered": 96.31901840490798,
+      "percent_statements_covered_display": "96"
     },
     "basic_assembler/assembly.py": {
       "covered_branches": 95,
@@ -130,19 +155,19 @@
     },
     "basic_assembler/cli.py": {
       "covered_branches": 98,
-      "covered_lines": 213,
+      "covered_lines": 215,
       "excluded_lines": 0,
       "missing_branches": 12,
-      "missing_lines": 14,
+      "missing_lines": 12,
       "num_branches": 110,
       "num_partial_branches": 12,
       "num_statements": 227,
       "percent_branches_covered": 89.0909090909091,
       "percent_branches_covered_display": "89",
-      "percent_covered": 92.28486646884274,
-      "percent_covered_display": "92",
-      "percent_statements_covered": 93.83259911894272,
-      "percent_statements_covered_display": "94"
+      "percent_covered": 92.87833827893175,
+      "percent_covered_display": "93",
+      "percent_statements_covered": 94.7136563876652,
+      "percent_statements_covered_display": "95"
     },
     "basic_assembler/pipeline.py": {
       "covered_branches": 67,
@@ -159,6 +184,22 @@
       "percent_covered_display": "91",
       "percent_statements_covered": 93.68029739776952,
       "percent_statements_covered_display": "94"
+    },
+    "basic_assembler/processes.py": {
+      "covered_branches": 6,
+      "covered_lines": 28,
+      "excluded_lines": 0,
+      "missing_branches": 0,
+      "missing_lines": 0,
+      "num_branches": 6,
+      "num_partial_branches": 0,
+      "num_statements": 28,
+      "percent_branches_covered": 100.0,
+      "percent_branches_covered_display": "100",
+      "percent_covered": 100.0,
+      "percent_covered_display": "100",
+      "percent_statements_covered": 100.0,
+      "percent_statements_covered_display": "100"
     },
     "basic_assembler/reads.py": {
       "covered_branches": 92,
@@ -177,19 +218,19 @@
       "percent_statements_covered_display": "99"
     },
     "basic_assembler/reference_builder.py": {
-      "covered_branches": 175,
-      "covered_lines": 426,
+      "covered_branches": 174,
+      "covered_lines": 423,
       "excluded_lines": 0,
-      "missing_branches": 19,
-      "missing_lines": 28,
-      "num_branches": 194,
-      "num_partial_branches": 19,
-      "num_statements": 454,
-      "percent_branches_covered": 90.20618556701031,
-      "percent_branches_covered_display": "90",
-      "percent_covered": 92.74691358024691,
+      "missing_branches": 18,
+      "missing_lines": 25,
+      "num_branches": 192,
+      "num_partial_branches": 18,
+      "num_statements": 448,
+      "percent_branches_covered": 90.625,
+      "percent_branches_covered_display": "91",
+      "percent_covered": 93.28125,
       "percent_covered_display": "93",
-      "percent_statements_covered": 93.83259911894272,
+      "percent_statements_covered": 94.41964285714286,
       "percent_statements_covered_display": "94"
     },
     "basic_assembler/skill_cli.py": {
@@ -211,24 +252,20 @@
   },
   "pytest": {
     "failed": 0,
-    "passed": 307,
-    "runs": [
-      {
-        "passed": 295,
-        "scope": "entire suite before release asset helper was added",
-        "seconds": 45.0
-      },
-      {
-        "passed": 12,
-        "scope": "new release asset helper tests",
-        "seconds": 0.06
-      }
-    ],
-    "seconds": 45.06,
+    "passed": 319,
+    "scope": "entire suite with real Bowtie2 2.5.5",
+    "seconds": 45.63,
     "skipped": 0
   },
-  "release": "2.0.0",
+  "readme_review": {
+    "claude-opus-5-5-high": "completed via agy; actionable feedback incorporated",
+    "fresh_codex": "independent rewrite and integrated fact/command/link check completed",
+    "gemini-4-argon-high": "completed via agy; actionable feedback incorporated",
+    "record": "docs/README_REVIEW.md"
+  },
+  "release": "2.0.1",
   "release_helper_sha256": {
+    "packaging/bioconda/meta.yaml.in": "5b2ecd60f674c5cc7276bda2ae6eebf814f79d7db4a1e35c6fe3511bf1983858",
     "packaging/bioconda/prepare.py": "70eb3d8cb318024e789482c1ab745880be41c24fe34ce363adf9aaddef16d791",
     "packaging/bioconda/run_test.py": "33d58201e95667aad2460a50c1f26404df95ebb8b43271cdd94725c306a32eb9",
     "packaging/release_assets.py": "a3a03ed050c939e6d75f9fcf982151ac942c9cc584fc6670ff209fe3d58370a6"
@@ -240,15 +277,16 @@
   },
   "source_sha256": {
     "BASIC.py": "3093cc9f0a77f0eb7d6836bf2568a3876ab4edd60918e6565b2d50a861b16c2a",
-    "basic_assembler/__init__.py": "8d530fdbc98531ee58fd05d020076ec69af1c0e785be688e89c259c298ba66db",
+    "basic_assembler/__init__.py": "f8262b28a6a0385beba61b301f502ab8b5080fed74d856d93767f7340b7f3203",
     "basic_assembler/__main__.py": "935a1c1166b0c1ea35a82256345000bf2c73ded718d77773bc27a71ecce28f7d",
-    "basic_assembler/alignment.py": "e0743218a2996669b8d7053e931853c6dc4e9e6188e4d6dfabbca0269efaa8aa",
-    "basic_assembler/annotation.py": "2af81c0fd57452a8d98912f89f03920e9c504ab4c68f520289146d0eb21eee0c",
+    "basic_assembler/alignment.py": "b04f71474281aafe931fe658be6794d8be0781838732a20b2a1540de3e5443dd",
+    "basic_assembler/annotation.py": "ef058a0563eea57b36961ef6caf99aa16667ef4dfa0258d64722954c2a32c217",
     "basic_assembler/assembly.py": "bb2bc01599408528a50cde884aea02139f650209c7ab7e8f538e08e69c075ca1",
     "basic_assembler/cli.py": "ede53b7bd8b7598bc27d73f9a568f32329fae1149121f807c3e57dde3c034b19",
     "basic_assembler/pipeline.py": "af1d7d81353bfc3f16b53815a690ca5094e59feba24cd004164f922891fe465a",
+    "basic_assembler/processes.py": "8b7bd4cdc6fb81afd9aa702f15125759b92a8dcc4a5db21b8bcbb8677901f3a8",
     "basic_assembler/reads.py": "ca844d127bada63ed1b5db5644ec0befda3bdf61d70802e08136dd9685dd4862",
-    "basic_assembler/reference_builder.py": "0bd0333d33362da6fe95b792436952b6c32a96a2f16746b1eb4a3b7dee791669",
+    "basic_assembler/reference_builder.py": "7d515567b81f343c1959c90a2103a9ace7d76516c82dc27563331e7c8844c32c",
     "basic_assembler/skill_cli.py": "09c85d74cd1833bda549f18898d3165a5109ab3f108846f448ed7d42cb08e82b"
   }
 }
