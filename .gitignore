@@ -22,3 +22,4 @@ batch-*.json
 .coverage.*
 coverage.xml
 htmlcov/
+/.local-maintenance/
