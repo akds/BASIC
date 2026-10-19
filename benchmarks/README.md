@@ -86,6 +86,63 @@ The small fixtures in `tests/test_benchmarks.py` verify metric arithmetic. They
 are synthetic software tests, not biological performance evidence. No expanded
 biological benchmark panel or accuracy gain is claimed by this release.
 
+## Compare assembly settings
+
+Use the same per-cell reads and sample names, with a fresh output directory
+for every configuration. Keep `-a` enabled so partial and empty results remain
+available for scoring. Start with the default and combined runs below; use
+the separate beam and anchor runs to understand which change helps. These
+are suggested trial settings, not validated accuracy presets.
+
+| Run | Additional assembly options | Question |
+| --- | --- | --- |
+| Default | None | What does the standard search recover? |
+| Beam | `--beam-width 4` | Does keeping alternative paths help? |
+| Anchors | `--max-anchors 2` | Do other starting reads help? |
+| Combined: broader search | `--beam-width 4 --max-anchors 2` | Do the two changes help together? |
+| Evidence | Combined options plus `--scoring evidence --quality-weighted --mate-aware` | Does quality and mate support improve paired-read results? |
+| Local seeds | `--local-seeding` | Does local reference alignment recover useful seeds missed by the default alignment? |
+
+For single-end data, omit `--mate-aware`. Test `--max-candidates 2` separately
+if secondary predictions matter. It retains additional seed-pair results;
+it does not expand the search, and it is not a two-contig cap. Freeze a rule
+for selecting the primary prediction before looking at truth. Report primary
+predictions and all-candidate results separately rather than selecting whichever
+contig happens to match the expected sequence.
+
+For example, from the downloaded source, time the combined settings on the
+included example without installing BASIC as a package:
+
+```bash
+python3 benchmarks/benchmark.py \
+  --expected-fasta examples/cell_A1/result.fasta \
+  --actual-fasta results/cell_A1-beam/result.fasta \
+  --label included-human-bcr-beam \
+  --output results/cell_A1-beam/comparison.json \
+  --run python3 BASIC.py -SE examples/cell_A1/ERR1421621_1M_reads.fastq.gz \
+    -g human -i BCR -n result -o results/cell_A1-beam -p 2 -a \
+    --beam-width 4 --max-anchors 2
+```
+
+This is still a regression comparison with the stored BASIC result, not an
+independent test of accuracy. Alternative paths can introduce additional
+FASTA identifiers; inspect missing and extra IDs instead of silently removing
+them to improve a score.
+
+Choose settings on a development subset and report performance on held-out
+cells. Include failures and missing chains. Measure correct recovery,
+junction/CDR3 accuracy, extra predictions, sequence errors, runtime, and peak
+memory together. Longer contigs or more `complete` calls alone do not establish
+an improvement. Use independent truth and an external alignment workflow if
+you need sequence identity or constant-region coverage; this script does not
+align sequences or automatically match chains across tools.
+
+Use the same IgBLAST version and annotation databases across configurations.
+For coverage experiments, subsample with fixed random seeds while preserving
+pairs: BASIC's `--subsample` takes a file prefix, not a random sample. More
+search costs time and memory, so retain the smallest configuration that
+improves correct recovery without unacceptable errors or resource use.
+
 ## Optional IgBLAST annotation
 
 The pipeline can run a local `igblastn` with AIRR output (`-outfmt 19`, supported
