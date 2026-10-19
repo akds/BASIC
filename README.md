@@ -15,6 +15,8 @@ or deduplicate UMIs.
 
 [Download and run](#download-and-run) · [Conda](#using-conda) · [Agent skills](#agent-skills)
 
+[Assembly settings](#try-a-broader-assembly-search) · [Other organisms](#use-another-organism) · [IgBLAST](#annotate-with-igblast) · [Benchmarks](#check-an-example-then-benchmark)
+
 ## Download and run
 
 BASIC runs directly from the downloaded source on Linux or macOS. You need
@@ -164,6 +166,135 @@ score.
 For automated workflows, use the run manifest as the completion marker and
 verify its output checksums. See [output and algorithm details](docs/ALGORITHMS.md).
 
+## Try a broader assembly search
+
+The defaults retain BASIC's original extension scoring. If a chain is partial,
+**beam search** can explore
+alternative overlaps, and additional **anchors** can give assembly different
+starting reads. Compare the same cell in separate output directories:
+
+```bash
+# Default search; retain partial results for inspection
+python3 BASIC.py -PE_1 cell_R1.fastq.gz -PE_2 cell_R2.fastq.gz \
+  -g human -i BCR -n cell_001 -o results/default -a
+
+# Try more paths and starting reads
+python3 BASIC.py -PE_1 cell_R1.fastq.gz -PE_2 cell_R2.fastq.gz \
+  -g human -i BCR -n cell_001 -o results/beam -a \
+  --beam-width 4 --max-anchors 2
+```
+
+These are settings to try, not established accuracy improvements. They cost
+more time and memory and can produce competing contigs.
+
+| Option | What it changes |
+| --- | --- |
+| `--beam-width 4` | Keeps alternative overlap paths instead of following one path; default `1` |
+| `--max-anchors 2` | Tries up to two starting reads per locus on each V/C side; default `1` |
+| `--max-candidates 2` | Retains more distinct seed-pair results; default `1`. It does not widen the search or impose a two-contig limit |
+
+For a separate paired-read experiment, add
+`--scoring evidence --quality-weighted --mate-aware` to the broader-search
+command and choose another output directory. This ranks extensions using
+read quality and mate support. Both flags require `--scoring evidence`;
+`--mate-aware` also requires paired reads and does not enforce fragment length
+or orientation. See the [algorithm guide](docs/ALGORITHMS.md) for the scoring rules.
+
+Use the summary and run manifest to decide what to try next:
+
+| Observation | What to check |
+| --- | --- |
+| Missing seeds or an `unsupported` chain | Species, reference content, and receptor read coverage |
+| `no_supported_overlap` | Coverage gaps and read quality; extension requires exact overlaps |
+| `max_steps` or `max_contig_length` | Whether a search limit stopped a plausible assembly before increasing that limit |
+
+If receptor reads are present but divergent from the references, try
+`--local-seeding` in a separate run. It allows local reference matches during
+seed selection and can admit less specific reads; extension still requires
+exact read overlaps.
+
+Keep `--min-overlap 15` and `--min-support 2` initially. Lower thresholds can
+create false joins. Quality trimming (`--trim-quality 20`) may help poor read
+ends but also removes overlap evidence. More search cannot recover sequence
+absent from the reads, and a longer contig is not necessarily more accurate.
+
+## Use another organism
+
+BASIC can assemble BCRs and TCRs from other species when suitable variable and
+constant references are available. The reference tool can search NCBI and
+download selected accessions or HTTPS FASTA files; local FASTA files work too.
+
+For example, search for rabbit records:
+
+```bash
+python3 -m basic_assembler.reference_builder search \
+  --organism 'Oryctolagus cuniculus' --query 'immunoglobulin' \
+  --limit 10 --output rabbit_candidates.json
+```
+
+Search results need biological review. Select the relevant regional sequences
+and prepare `rabbit_sources.json` using the
+[manifest example](docs/NON_MODEL_ORGANISMS.md#build-from-files-urls-or-selected-accessions).
+It declares all four V/C reference groups, their loci, and sequence orientation.
+Then build the indexes and assemble a cell:
+
+```bash
+python3 -m basic_assembler.reference_builder build \
+  --manifest rabbit_sources.json --output ./references \
+  --species rabbit --receptor BCR \
+  --bowtie-build /path/to/bowtie2-build
+
+python3 BASIC.py -SE rabbit_cell.fastq.gz -g rabbit -i BCR \
+  -d ./references -n rabbit_cell -o results/rabbit
+```
+
+Accession downloads retrieve whole records; the builder does not extract
+exons or turn a chromosome into a receptor reference. Supported locus names
+are `IGH`, `IGK`, `IGL`, `TRA`, `TRB`, `TRG`, and `TRD`.
+
+If references are unavailable, `--seed-species related_species --local-seeding`
+can try an existing related-species library while `-g` names the target
+species. This is experimental: BASIC neither chooses the related species nor
+infers a germline catalogue. It still assembles the target cell's reads by
+exact overlaps. See the [non-model organism guide](docs/NON_MODEL_ORGANISMS.md)
+for the full workflow and its limits.
+
+## Annotate with IgBLAST
+
+Optional IgBLAST annotation adds V/D/J gene calls, junction/CDR3 sequences,
+and predicted productivity to `<sample>.airr.tsv`. It annotates the assembled
+contigs; it does not extend or repair them.
+
+Install `igblastn` and obtain or build species-matched nucleotide BLAST
+databases using the [NCBI setup guide](https://ncbi.github.io/igblast/cook/How-to-set-up.html).
+Supply V and J databases, a D database for VDJ loci, and a J auxiliary file
+matching the database sequences and identifiers. These are separate from
+BASIC's Bowtie2 seed indexes.
+
+Replace the paths below with your installation and database **prefixes**:
+
+```bash
+python3 BASIC.py -PE_1 cell_R1.fastq.gz -PE_2 cell_R2.fastq.gz \
+  -g human -i BCR -n cell_001 -o results/annotated \
+  --igblast /opt/igblast/bin/igblastn \
+  --germline-v /data/igblast/human_ig_V \
+  --germline-d /data/igblast/human_ig_D \
+  --germline-j /data/igblast/human_ig_J \
+  --auxiliary-data /opt/igblast/optional_file/human_gl.aux \
+  --igdata /opt/igblast
+```
+
+`--igdata` points to the directory containing `internal_data`. For TCRs, use
+`-i TCR` with TCR databases and matching J auxiliary data. Add
+`--germline-c /data/igblast/human_ig_C` for C-gene calls when supported by your
+IgBLAST version; isotype assignment depends on sufficient constant sequence.
+
+For a non-model species, IgBLAST also needs the
+[custom-organism setup](https://ncbi.github.io/igblast/cook/How-to-set-up.html#procedure-to-set-up-igblast-for-custom-organism)
+under the species name passed to `-g`. Building BASIC references alone does
+not provide it. Missing annotations stay empty: an empty `productive` field
+does not mean an unproductive receptor. See [annotation details](docs/USAGE.md#optional-igblast-annotation).
+
 ## Check an example, then benchmark
 
 Compare the example you just assembled with the supplied BASIC result:
@@ -190,6 +321,14 @@ comparisons. The [benchmark guide](benchmarks/README.md) covers timing,
 metric definitions, and comparisons between tools or settings. See the
 [validation report](docs/VALIDATION.md) for measured results and their limits.
 
+For benchmarking, compare the defaults with **`--beam-width 4 --max-anchors 2`**
+as a starting point for a broader search. For paired reads, also test adding
+**`--scoring evidence --quality-weighted --mate-aware`**. These options target
+missed paths, alternative starting reads, and branch selection; they are not
+validated accuracy presets. The [benchmark settings guide](benchmarks/README.md#compare-assembly-settings)
+includes a runnable example and explains how to compare recovery, extra
+predictions, and runtime.
+
 ## Go further
 
 | Task | Where to start |
@@ -199,10 +338,6 @@ metric definitions, and comparisons between tools or settings. See the
 | Work with another organism | [Build references from FASTA, HTTPS sources, or NCBI accessions](docs/NON_MODEL_ORGANISMS.md) |
 | Use an AI coding assistant | [Portable skill for Codex, Claude, and Antigravity](docs/AGENT_SKILL.md) |
 | Explore assembly settings | [Algorithms and experimental options](docs/ALGORITHMS.md) |
-
-Custom references must identify the correct receptor loci and orientation.
-Related-species seeding is experimental; it does not infer a validated germline
-catalogue or justify definitive gene calls across species.
 
 ## What's new in 2.0
 
