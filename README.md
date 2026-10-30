@@ -348,9 +348,8 @@ predictions, and runtime.
   ordering, and support for matching mouse gamma/delta seeds.
 - **Workflows:** stricter input checks, protected outputs, structured
   reports, per-cell batches, optional annotation, and custom reference tools.
-- **Experimental options:** quality and mate evidence, alternative assembly
-  paths, and multiple candidates. These have not been shown to improve
-  biological accuracy in general.
+- **Optional features:** quality and mate evidence, alternative assembly
+  paths, and multiple candidates. 
 
 Patch 2.0.1 fixes error handling when the operating system denies process-group
 cleanup. See the [changelog and migration notes](CHANGELOG.md).
