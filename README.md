@@ -295,7 +295,7 @@ under the species name passed to `-g`. Building BASIC references alone does
 not provide it. Missing annotations stay empty: an empty `productive` field
 does not mean an unproductive receptor. See [annotation details](docs/USAGE.md#optional-igblast-annotation).
 
-## Check an example, then benchmark
+## Example and benchmarking suggestions
 
 Compare the example you just assembled with the supplied BASIC result:
 
@@ -329,7 +329,7 @@ validated accuracy presets. The [benchmark settings guide](benchmarks/README.md#
 includes a runnable example and explains how to compare recovery, extra
 predictions, and runtime.
 
-## Go further
+## More extentions
 
 | Task | Where to start |
 | --- | --- |
